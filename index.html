@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CoC キャラシメーカー — クトゥルフ神話TRPG 6版</title>
+<style>
+:root {
+  --bg: #0d0d14;
+  --surface: #161625;
+  --surface2: #1e1e30;
+  --border: #2a2a40;
+  --accent: #7c5cbf;
+  --accent2: #a07de0;
+  --danger: #c0392b;
+  --green: #27ae60;
+  --text: #ddd8f0;
+  --muted: #888;
+  --gold: #c9a84c;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Hiragino Kaku Gothic ProN', 'Yu Gothic', 'Meiryo', sans-serif;
+  font-size: 14px;
+  min-height: 100vh;
+}
+.header {
+  background: linear-gradient(135deg, #0d0d14 0%, #1a0d2e 100%);
+  border-bottom: 1px solid var(--accent);
+  padding: 20px 24px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.header h1 {
+  font-size: 22px;
+  color: var(--accent2);
+  letter-spacing: 0.05em;
+}
+.header .subtitle {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+.octopus { font-size: 36px; line-height: 1; filter: hue-rotate(200deg); }
+.main { display: flex; min-height: calc(100vh - 80px); }
+.sidebar {
+  width: 280px;
+  flex-shrink: 0;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.sidebar h2 {
+  font-size: 13px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 4px;
+}
+.field-group { display: flex; flex-direction: column; gap: 6px; }
+.field-group label { font-size: 12px; color: var(--muted); }
+select, input {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  padding: 8px 10px;
+  font-size: 13px;
+  width: 100%;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+select:hover, input:hover { border-color: var(--accent); }
+select:focus, input:focus { border-color: var(--accent2); }
+.btn-generate {
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-size: 16px;
+  font-weight: bold;
+  padding: 14px;
+  width: 100%;
+  cursor: pointer;
+  letter-spacing: 0.05em;
+  transition: opacity 0.2s, transform 0.1s;
+  margin-top: 8px;
+}
+.btn-generate:hover { opacity: 0.9; }
+.btn-generate:active { transform: scale(0.98); }
+.btn-small {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-size: 12px;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  width: 100%;
+  text-align: left;
+}
+.btn-small:hover { border-color: var(--accent); background: var(--surface); }
+.btn-cocofolia {
+  background: linear-gradient(135deg, #1a3a5c, #2980b9);
+  border: none;
+  border-radius: 6px;
+  color: white;
+  font-size: 13px;
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  width: 100%;
+  font-weight: bold;
+}
+.btn-cocofolia:hover { opacity: 0.85; }
+.content {
+  flex: 1;
+  padding: 24px;
+  overflow-y: auto;
+}
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 60vh;
+  color: var(--muted);
+  gap: 12px;
+}
+.empty-state .big { font-size: 64px; filter: grayscale(0.5); opacity: 0.4; }
+.empty-state p { font-size: 16px; }
+.sheet { display: none; animation: fadeIn 0.4s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+.sheet-header {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.name-block .char-name {
+  font-size: 28px;
+  font-weight: bold;
+  color: var(--accent2);
+}
+.name-block .char-meta {
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: 4px;
+}
+.badge {
+  background: var(--accent);
+  color: white;
+  border-radius: 20px;
+  padding: 4px 14px;
+  font-size: 13px;
+  font-weight: bold;
+}
+.derived-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+.derived-item {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 14px;
+  text-align: center;
+  min-width: 70px;
+}
+.derived-item .d-label { font-size: 10px; color: var(--muted); }
+.derived-item .d-val { font-size: 22px; font-weight: bold; color: var(--gold); margin-top: 2px; }
+.derived-item.san .d-val { color: #6ab8ff; }
+.derived-item.hp .d-val { color: #e74c3c; }
+.derived-item.mp .d-val { color: #3498db; }
+.section-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+@media (max-width: 900px) { .section-grid { grid-template-columns: 1fr; } }
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px;
+}
+.card h3 {
+  font-size: 12px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+.stat-box {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px;
+  text-align: center;
+}
+.stat-box .s-name { font-size: 11px; color: var(--muted); }
+.stat-box .s-val { font-size: 26px; font-weight: bold; color: var(--accent2); }
+.stat-box .s-x5 { font-size: 10px; color: var(--muted); }
+.skills-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.skill-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.skill-name { flex: 1; font-size: 12px; }
+.skill-bar-bg {
+  width: 80px;
+  height: 6px;
+  background: var(--surface2);
+  border-radius: 3px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.skill-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+  transition: width 0.6s ease;
+}
+.skill-bar-fill.high { background: linear-gradient(90deg, #e67e22, var(--gold)); }
+.skill-bar-fill.master { background: linear-gradient(90deg, #c0392b, #e74c3c); }
+.skill-val {
+  width: 28px;
+  text-align: right;
+  font-size: 12px;
+  font-weight: bold;
+  color: var(--text);
+  flex-shrink: 0;
+}
+.skill-row.primary .skill-name { color: var(--accent2); font-weight: bold; }
+.skill-row.primary .skill-val { color: var(--gold); }
+.skills-full-card { grid-column: 1 / -1; }
+.skills-all-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px 16px;
+}
+@media (max-width: 700px) { .skills-all-grid { grid-template-columns: 1fr 1fr; } }
+.section-label {
+  font-size: 10px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin: 10px 0 6px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--border);
+  grid-column: 1 / -1;
+}
+.db-box {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 13px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.db-box .db-val { font-size: 18px; font-weight: bold; color: var(--gold); }
+.toast {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: var(--green);
+  color: white;
+  border-radius: 8px;
+  padding: 12px 20px;
+  font-weight: bold;
+  font-size: 14px;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.3s ease;
+  z-index: 9999;
+  pointer-events: none;
+}
+.toast.show { opacity: 1; transform: translateY(0); }
+.sidebar-divider {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 4px 0;
+}
+.tips { font-size: 11px; color: var(--muted); line-height: 1.5; }
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="octopus">🐙</div>
+  <div>
+    <h1>クトゥルフ神話TRPG キャラシメーカー</h1>
+    <div class="subtitle">6版対応 — ボタン1つでキャラクターシート生成</div>
+  </div>
+</div>
+<div class="main">
+  <div class="sidebar">
+    <div>
+      <h2>オプション</h2>
+    </div>
+    <div class="field-group">
+      <label>性別</label>
+      <select id="sel-sex">
+        <option value="random">ランダム</option>
+        <option value="男性">男性</option>
+        <option value="女性">女性</option>
+      </select>
+    </div>
+    <div class="field-group">
+      <label>職業</label>
+      <select id="sel-job">
+        <option value="random">ランダム</option>
+      </select>
+    </div>
+    <div class="field-group">
+      <label>年齢（空欄＝ランダム）</label>
+      <input type="number" id="inp-age" min="14" max="80" placeholder="18〜65">
+    </div>
+    <button class="btn-generate" id="btn-gen">⚅ キャラクターを生成</button>
+    <hr class="sidebar-divider">
+    <div>
+      <h2>エクスポート</h2>
+    </div>
+    <button class="btn-small" id="btn-copy-text">📋 テキストでコピー</button>
+    <button class="btn-cocofolia" id="btn-cocofolia">🎲 ココフォリア駒データをコピー</button>
+    <div class="tips">
+      ※ ココフォリアで「キャラクター追加 → クリップボードから」を選んでペーストしてください。HP/MP/SANと全技能のダイスコマンドが含まれます。
+    </div>
+  </div>
+  <div class="content" id="content">
+    <div class="empty-state" id="empty">
+      <div class="big">📜</div>
+      <p>左のボタンでキャラクターを生成してください</p>
+    </div>
+    <div class="sheet" id="sheet"></div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ============================
+// DATA
+// ============================
+const LAST_NAMES = ['田中','鈴木','佐藤','山田','中村','小林','加藤','吉田','山口','松本','井上','木村','林','清水','山崎','阿部','池田','橋本','山本','岡田','渡辺','斎藤','高橋','伊藤','中島','福田','藤原','近藤','石川','宮崎','菊地','西村','上田','工藤','長谷川','野口','森','丸山','小野','三浦'];
+const FIRST_M = ['太郎','健','翔','大輔','誠','浩','直樹','拓也','雄介','晴彦','剛','博','慎一','光','勇','哲也','進','隆','和也','俊介','義雄','亮','裕二','達也','真一','幸夫','文雄','廉','大樹','悠'];
+const FIRST_F = ['花子','恵','由美','裕子','幸','明子','真由美','愛','美咲','奈々','麻衣','千尋','彩','陽菜','美樹','優子','沙織','香','遥','凛','澪','七海','紗英','里奈','詩織','杏奈','彩乃','瑞希','夏希','葵'];
+
+const ALL_SKILLS = {
+  // 探索
+  '目星': 25, '聞き耳': 25, '隠れる': 10, '忍び歩き': 10, '追跡': 10,
+  'ナビゲート': 10, '写真術': 10,
+  // 交渉
+  '言いくるめ': 5, '説得': 15, '信用': 15, '心理学': 5, '値切り': 5,
+  // 知識
+  '図書館': 25, '医学': 5, '応急手当': 30, '法律': 5, '会計': 10,
+  '歴史': 20, '考古学': 1, 'オカルト': 5, 'クトゥルフ神話': 0,
+  '天文学': 1, '生物学': 1, '地質学': 1, '薬学': 1, '化学': 1,
+  '物理学': 1, '電子工学': 1, '機械修理': 20, '電気修理': 10,
+  'コンピューター': 1,
+  // 技術・芸術
+  '変装': 1, '芸術': 5, '製作': 5,
+  // 行動
+  '登攀': 40, '跳躍': 25, '水泳': 25, '投擲': 25, '運転': 20, '乗馬': 5,
+  // 戦闘
+  'こぶし': 50, 'キック': 25, '頭突き': 10, '組み付き': 25,
+  '拳銃': 20, 'ライフル': 25, 'ショットガン': 30, 'サブマシンガン': 15, '刃物': 25,
+  // 特殊（自動計算）
+  '回避': 0, '母国語': 0,
+  // その他
+  '他の言語': 1,
+};
+
+const SKILL_CATEGORIES = [
+  { label: '探索技能', keys: ['目星','聞き耳','隠れる','忍び歩き','追跡','ナビゲート','写真術'] },
+  { label: '交渉技能', keys: ['言いくるめ','説得','信用','心理学','値切り'] },
+  { label: '知識技能', keys: ['図書館','医学','応急手当','法律','会計','歴史','考古学','オカルト','クトゥルフ神話','天文学','生物学','地質学','薬学','化学','物理学','電子工学','機械修理','電気修理','コンピューター'] },
+  { label: '技術・芸術', keys: ['変装','芸術','製作'] },
+  { label: '行動技能', keys: ['登攀','跳躍','水泳','投擲','運転','乗馬'] },
+  { label: '戦闘技能', keys: ['回避','こぶし','キック','頭突き','組み付き','拳銃','ライフル','ショットガン','サブマシンガン','刃物'] },
+  { label: '言語技能', keys: ['母国語','他の言語'] },
+];
+
+const OCCUPATIONS = [
+  {
+    name: '探偵', creditMin: 20, creditMax: 45,
+    points: s => s.EDU * 20,
+    primarySkills: ['図書館','言いくるめ','目星','心理学','法律','追跡','隠れる','聞き耳'],
+    desc: '事件を調査するプロフェッショナル'
+  },
+  {
+    name: '医師', creditMin: 30, creditMax: 70,
+    points: s => s.EDU * 20,
+    primarySkills: ['医学','生物学','薬学','応急手当','心理学','言いくるめ','信用','図書館'],
+    desc: '人々の命を救う医療のプロ'
+  },
+  {
+    name: '警察官', creditMin: 20, creditMax: 40,
+    points: s => s.EDU * 20,
+    primarySkills: ['法律','拳銃','こぶし','聞き耳','目星','追跡','隠れる','運転'],
+    desc: '法を守り市民を守護する'
+  },
+  {
+    name: '記者', creditMin: 10, creditMax: 40,
+    points: s => s.EDU * 20,
+    primarySkills: ['言いくるめ','図書館','目星','写真術','心理学','説得','歴史','運転'],
+    desc: '真実を追い求めるジャーナリスト'
+  },
+  {
+    name: '学者・教授', creditMin: 20, creditMax: 70,
+    points: s => s.EDU * 20,
+    primarySkills: ['図書館','歴史','考古学','心理学','信用','他の言語','オカルト','天文学'],
+    desc: '知識を探求する学術研究者'
+  },
+  {
+    name: '軍人', creditMin: 10, creditMax: 30,
+    points: s => s.EDU * 20,
+    primarySkills: ['ライフル','こぶし','跳躍','登攀','隠れる','忍び歩き','応急手当','ナビゲート'],
+    desc: '訓練を積んだ軍人'
+  },
+  {
+    name: '神父・牧師', creditMin: 20, creditMax: 50,
+    points: s => s.EDU * 20,
+    primarySkills: ['心理学','言いくるめ','歴史','オカルト','図書館','聞き耳','信用','他の言語'],
+    desc: '信仰を守り導く宗教者'
+  },
+  {
+    name: '芸術家', creditMin: 5, creditMax: 30,
+    points: s => s.EDU * 10 + Math.max(s.DEX, s.APP) * 10,
+    primarySkills: ['芸術','心理学','聞き耳','目星','言いくるめ','説得','写真術','製作'],
+    desc: '感性で表現するクリエイター'
+  },
+  {
+    name: '作家', creditMin: 10, creditMax: 40,
+    points: s => s.EDU * 20,
+    primarySkills: ['図書館','歴史','オカルト','心理学','写真術','言いくるめ','説得','他の言語'],
+    desc: '物語を紡ぐ文筆家'
+  },
+  {
+    name: '古物商', creditMin: 20, creditMax: 50,
+    points: s => s.EDU * 20,
+    primarySkills: ['図書館','歴史','考古学','言いくるめ','値切り','信用','他の言語','芸術'],
+    desc: '骨董品や古物を扱う商人'
+  },
+  {
+    name: '冒険家', creditMin: 10, creditMax: 40,
+    points: s => s.EDU * 10 + Math.max(s.DEX, s.STR) * 10,
+    primarySkills: ['登攀','水泳','跳躍','ナビゲート','応急手当','ライフル','運転','図書館'],
+    desc: '未知の領域を探索する冒険者'
+  },
+  {
+    name: '刑事', creditMin: 20, creditMax: 50,
+    points: s => s.EDU * 20,
+    primarySkills: ['法律','目星','聞き耳','心理学','追跡','こぶし','拳銃','言いくるめ'],
+    desc: '犯罪捜査を専門とする刑事'
+  },
+  {
+    name: '精神科医', creditMin: 30, creditMax: 70,
+    points: s => s.EDU * 20,
+    primarySkills: ['心理学','医学','薬学','言いくるめ','説得','図書館','信用','聞き耳'],
+    desc: '心の病を治療する専門家'
+  },
+  {
+    name: '建築家', creditMin: 30, creditMax: 60,
+    points: s => s.EDU * 20,
+    primarySkills: ['製作','機械修理','電気修理','図書館','物理学','会計','信用','歴史'],
+    desc: '建物を設計する専門家'
+  },
+  {
+    name: '占い師', creditMin: 10, creditMax: 40,
+    points: s => s.EDU * 20,
+    primarySkills: ['オカルト','心理学','言いくるめ','歴史','図書館','説得','目星','聞き耳'],
+    desc: '神秘の力で未来を占う者'
+  },
+  {
+    name: '船員', creditMin: 10, creditMax: 30,
+    points: s => s.EDU * 20,
+    primarySkills: ['水泳','ナビゲート','ロープ','投擲','ショットガン','機械修理','応急手当','聞き耳'],
+    desc: '海を渡る海の男'
+  },
+  {
+    name: 'ディレッタント', creditMin: 50, creditMax: 99,
+    points: s => s.EDU * 20,
+    primarySkills: ['芸術','乗馬','図書館','他の言語','ライフル','信用','説得','会計'],
+    desc: '豊かな趣味人・有閑階級'
+  },
+];
+
+// ============================
+// UTILS
+// ============================
+function d6() { return Math.floor(Math.random() * 6) + 1; }
+function r3d6() { return d6()+d6()+d6(); }
+function r2d6p6() { return d6()+d6()+6; }
+function r3d6p3() { return Math.min(d6()+d6()+d6()+3, 18); }
+function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+
+function damageBonus(str, siz) {
+  const t = str + siz;
+  if (t <= 12) return '-1d6';
+  if (t <= 16) return '-1d4';
+  if (t <= 24) return '0';
+  if (t <= 32) return '+1d4';
+  if (t <= 40) return '+1d6';
+  return '+2d6';
+}
+
+function distributePoints(skillNames, total, currentSkills) {
+  const result = {};
+  skillNames.forEach(s => result[s] = currentSkills[s] ?? ALL_SKILLS[s] ?? 1);
+  if (!skillNames.length || total <= 0) return result;
+
+  const weights = skillNames.map(() => Math.random() * 0.8 + 0.2);
+  const wSum = weights.reduce((a, b) => a + b, 0);
+  let allocs = weights.map(w => Math.round(total * w / wSum));
+  const aSum = allocs.reduce((a, b) => a + b, 0);
+  allocs[allocs.length - 1] += total - aSum;
+
+  let leftover = 0;
+  skillNames.forEach((name, i) => {
+    const base = result[name];
+    const maxAdd = Math.max(0, 90 - base);
+    const add = clamp(allocs[i] + leftover, 0, maxAdd);
+    leftover = allocs[i] + leftover - add;
+    result[name] = base + add;
+  });
+
+  // pour leftover into any skill with room
+  if (leftover > 0) {
+    for (const name of [...skillNames].sort(() => Math.random()-0.5)) {
+      if (leftover <= 0) break;
+      const space = 90 - result[name];
+      if (space > 0) {
+        const add = Math.min(space, leftover);
+        result[name] += add;
+        leftover -= add;
+      }
+    }
+  }
+  return result;
+}
+
+// ============================
+// GENERATION
+// ============================
+function generateCharacter() {
+  const sexSel = document.getElementById('sel-sex').value;
+  const jobSel = document.getElementById('sel-job').value;
+  const ageSel = document.getElementById('inp-age').value;
+
+  const sex = sexSel === 'random' ? pick(['男性','女性']) : sexSel;
+  const isMale = sex === '男性';
+  const name = pick(LAST_NAMES) + ' ' + pick(isMale ? FIRST_M : FIRST_F);
+  const age = ageSel ? parseInt(ageSel) : Math.floor(Math.random() * 48) + 18;
+
+  const stats = {
+    STR: r3d6(), CON: r3d6(), POW: r3d6(), DEX: r3d6(),
+    APP: r3d6(), SIZ: r2d6p6(), INT: r2d6p6(), EDU: r3d6p3(),
+  };
+
+  const HP = Math.floor((stats.CON + stats.SIZ) / 2);
+  const MP = stats.POW;
+  const SAN = stats.POW * 5;
+  const Luck = stats.POW * 5;
+  const Idea = stats.INT * 5;
+  const Know = stats.EDU * 5;
+  const DB = damageBonus(stats.STR, stats.SIZ);
+
+  const occ = jobSel === 'random'
+    ? pick(OCCUPATIONS)
+    : OCCUPATIONS.find(o => o.name === jobSel) || pick(OCCUPATIONS);
+
+  // Build base skills
+  let skills = {};
+  Object.keys(ALL_SKILLS).forEach(k => {
+    skills[k] = ALL_SKILLS[k];
+  });
+  skills['回避'] = stats.DEX * 2;
+  skills['母国語'] = stats.EDU * 5;
+
+  // Occupation skill points
+  const occPts = occ.points(stats);
+  const occUpdates = distributePoints(occ.primarySkills, occPts, skills);
+  Object.assign(skills, occUpdates);
+
+  // Credit rating from occupation range
+  skills['信用'] = Math.floor(
+    Math.random() * (occ.creditMax - occ.creditMin) + occ.creditMin
+  );
+
+  // Hobby skill points (INT×10) on non-primary skills
+  const hobbyPts = stats.INT * 10;
+  const hobbyPool = Object.keys(skills).filter(k =>
+    !occ.primarySkills.includes(k) && k !== 'クトゥルフ神話' && k !== '母国語' && k !== '信用'
+  );
+  const hobbyPick = [...hobbyPool].sort(() => Math.random() - 0.5).slice(0, 6);
+  const hobbyUpdates = distributePoints(hobbyPick, hobbyPts, skills);
+  Object.assign(skills, hobbyUpdates);
+
+  return {
+    name, sex, age,
+    occupation: occ.name,
+    occDesc: occ.desc,
+    primarySkills: occ.primarySkills,
+    stats, skills,
+    derived: { HP, MP, SAN, Luck, Idea, Know, DB },
+    occPts, hobbyPts,
+  };
+}
+
+// ============================
+// RENDER
+// ============================
+let currentChar = null;
+
+function renderSheet(c) {
+  const sheet = document.getElementById('sheet');
+  const { stats: s, derived: d, skills: sk, primarySkills } = c;
+
+  const skillRowsHtml = SKILL_CATEGORIES.map(cat => {
+    const rows = cat.keys.filter(k => k in sk).map(k => {
+      const val = sk[k];
+      const isPrimary = primarySkills.includes(k);
+      const pct = Math.min(val, 90);
+      const barClass = val >= 80 ? 'master' : val >= 60 ? 'high' : '';
+      return `
+        <div class="skill-row${isPrimary ? ' primary' : ''}">
+          <span class="skill-name">${k}</span>
+          <div class="skill-bar-bg"><div class="skill-bar-fill ${barClass}" style="width:${pct}%"></div></div>
+          <span class="skill-val">${val}</span>
+        </div>`;
+    }).join('');
+    return `<div class="section-label">${cat.label}</div>${rows}`;
+  }).join('');
+
+  sheet.innerHTML = `
+    <div class="sheet-header">
+      <div class="name-block">
+        <div class="char-name">${c.name}</div>
+        <div class="char-meta">${c.sex}・${c.age}歳・<span class="badge">${c.occupation}</span></div>
+        <div class="char-meta" style="margin-top:6px;color:var(--muted)">${c.occDesc}</div>
+        <div class="derived-row">
+          <div class="derived-item hp"><div class="d-label">HP</div><div class="d-val">${d.HP}</div></div>
+          <div class="derived-item mp"><div class="d-label">MP</div><div class="d-val">${d.MP}</div></div>
+          <div class="derived-item san"><div class="d-label">SAN</div><div class="d-val">${d.SAN}</div></div>
+          <div class="derived-item"><div class="d-label">幸運</div><div class="d-val">${d.Luck}</div></div>
+          <div class="derived-item"><div class="d-label">アイデア</div><div class="d-val">${d.Idea}</div></div>
+          <div class="derived-item"><div class="d-label">知識</div><div class="d-val">${d.Know}</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="section-grid">
+      <div class="card">
+        <h3>能力値</h3>
+        <div class="stat-grid">
+          ${['STR','CON','POW','DEX','APP','SIZ','INT','EDU'].map(k => `
+          <div class="stat-box">
+            <div class="s-name">${k}</div>
+            <div class="s-val">${s[k]}</div>
+            <div class="s-x5">×5 = ${s[k]*5}</div>
+          </div>`).join('')}
+        </div>
+        <div class="db-box" style="margin-top:12px">
+          <span>ダメージボーナス</span>
+          <span class="db-val">${d.DB}</span>
+        </div>
+      </div>
+      <div class="card">
+        <h3>職業技能（太字が職業技能）</h3>
+        <div class="skills-grid">
+          ${primarySkills.filter(k => k in sk).map(k => {
+            const val = sk[k];
+            const pct = Math.min(val, 90);
+            const barClass = val >= 80 ? 'master' : val >= 60 ? 'high' : '';
+            return `
+            <div class="skill-row primary">
+              <span class="skill-name">${k}</span>
+              <div class="skill-bar-bg"><div class="skill-bar-fill ${barClass}" style="width:${pct}%"></div></div>
+              <span class="skill-val">${val}</span>
+            </div>`;
+          }).join('')}
+        </div>
+        <div style="margin-top:10px;font-size:11px;color:var(--muted)">
+          職業技能P: ${c.occPts} &nbsp;|&nbsp; 趣味技能P: ${c.hobbyPts}
+        </div>
+      </div>
+      <div class="card skills-full-card">
+        <h3>全技能</h3>
+        <div class="skills-all-grid">
+          ${skillRowsHtml}
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('empty').style.display = 'none';
+  sheet.style.display = 'block';
+}
+
+// ============================
+// EXPORT
+// ============================
+function buildText(c) {
+  const { stats: s, derived: d, skills: sk, primarySkills } = c;
+  const lines = [
+    '=== クトゥルフ神話TRPG キャラクターシート ===',
+    `名前: ${c.name}　性別: ${c.sex}　年齢: ${c.age}歳`,
+    `職業: ${c.occupation}`,
+    '',
+    '--- 能力値 ---',
+    `STR:${s.STR}  CON:${s.CON}  POW:${s.POW}  DEX:${s.DEX}`,
+    `APP:${s.APP}  SIZ:${s.SIZ}  INT:${s.INT}  EDU:${s.EDU}`,
+    `HP:${d.HP}  MP:${d.MP}  SAN:${d.SAN}  幸運:${d.Luck}`,
+    `アイデア:${d.Idea}  知識:${d.Know}  DB:${d.DB}`,
+    '',
+    '--- 技能（職業技能＊） ---',
+  ];
+  SKILL_CATEGORIES.forEach(cat => {
+    const relevant = cat.keys.filter(k => k in sk && (sk[k] > (ALL_SKILLS[k] ?? 0) + 5 || primarySkills.includes(k)));
+    if (!relevant.length) return;
+    lines.push(`[${cat.label}]`);
+    relevant.forEach(k => {
+      const mark = primarySkills.includes(k) ? '＊' : '　';
+      lines.push(`  ${mark}${k}: ${sk[k]}`);
+    });
+  });
+  return lines.join('\n');
+}
+
+function buildCocofoliaJson(c) {
+  const { stats: s, derived: d, skills: sk } = c;
+
+  const memo = [
+    `職業: ${c.occupation}　性別: ${c.sex}　年齢: ${c.age}歳`,
+    '',
+    `STR:${s.STR}  CON:${s.CON}  POW:${s.POW}  DEX:${s.DEX}`,
+    `APP:${s.APP}  SIZ:${s.SIZ}  INT:${s.INT}  EDU:${s.EDU}`,
+    `DB:${d.DB}　幸運:${d.Luck}　アイデア:${d.Idea}　知識:${d.Know}`,
+  ].join('\n');
+
+  const commands = Object.entries(sk)
+    .filter(([, v]) => v > 0)
+    .sort((a, b) => b[1] - a[1])
+    .map(([k, v]) => `1D100<=${v} ${k}`)
+    .join('\n');
+
+  return JSON.stringify({
+    kind: 'character',
+    data: {
+      name: c.name,
+      initiative: 0,
+      externalUrl: '',
+      memo,
+      size: 1,
+      width: 1,
+      height: 1,
+      x: 0,
+      y: 0,
+      angle: 0,
+      alpha: 1,
+      color: '#ffffff',
+      commands,
+      secret: false,
+      invisible: false,
+      hideStatus: false,
+      iconUrl: '',
+      params: [
+        { name: 'HP',  value: String(d.HP),  max: String(d.HP)  },
+        { name: 'MP',  value: String(d.MP),  max: String(d.MP)  },
+        { name: 'SAN', value: String(d.SAN), max: String(d.SAN) },
+      ],
+      statuses: [],
+      tokens: [],
+    },
+  });
+}
+
+function copyToClipboard(text, msg) {
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(text).then(() => showToast(msg));
+  } else {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.cssText = 'position:fixed;opacity:0;pointer-events:none';
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    try { document.execCommand('copy'); showToast(msg); }
+    catch { showToast('コピーに失敗しました。手動でコピーしてください'); }
+    document.body.removeChild(ta);
+  }
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ============================
+// INIT
+// ============================
+function init() {
+  const sel = document.getElementById('sel-job');
+  OCCUPATIONS.forEach(o => {
+    const opt = document.createElement('option');
+    opt.value = o.name;
+    opt.textContent = o.name;
+    sel.appendChild(opt);
+  });
+
+  document.getElementById('btn-gen').addEventListener('click', () => {
+    currentChar = generateCharacter();
+    renderSheet(currentChar);
+  });
+
+  document.getElementById('btn-copy-text').addEventListener('click', () => {
+    if (!currentChar) { showToast('先にキャラクターを生成してください'); return; }
+    copyToClipboard(buildText(currentChar), 'テキストをコピーしました！');
+  });
+
+  document.getElementById('btn-cocofolia').addEventListener('click', () => {
+    if (!currentChar) { showToast('先にキャラクターを生成してください'); return; }
+    copyToClipboard(buildCocofoliaJson(currentChar), 'ココフォリア駒データをコピーしました！');
+  });
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
