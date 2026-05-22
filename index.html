@@ -665,12 +665,18 @@ function toCoco(c){
       memo,size:1,width:1,height:1,x:0,y:0,angle:0,alpha:1,
       color:'#ffffff',commands:cmds,
       secret:false,invisible:false,hideStatus:false,iconUrl:'',
-      params:[
-        {name:'HP', value:d.HP, max:d.HP},
-        {name:'MP', value:d.MP, max:d.MP},
-        {name:'SAN',value:d.SAN,max:d.SAN},
+      status:[
+        {label:'HP', value:String(d.HP), max:String(d.HP)},
+        {label:'MP', value:String(d.MP), max:String(d.MP)},
+        {label:'SAN',value:String(d.SAN),max:String(d.SAN)},
       ],
-      statuses:[],tokens:[],
+      params:[
+        {label:'幸運',    value:String(d.Luck)},
+        {label:'アイデア',value:String(d.Idea)},
+        {label:'知識',    value:String(d.Know)},
+        {label:'DB',      value:String(d.DB)},
+      ],
+      tokens:[],
     }
   });
 }
