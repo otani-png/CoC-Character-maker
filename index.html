@@ -668,15 +668,6 @@ function toCoco(c){
     `CCB<={EDU}*5 【EDU×5】`,
   ].join('\n');
 
-  const memo=[
-    `【${c.occupation}】${c.sex}・${c.age}歳`,
-    `STR:${s.STR} CON:${s.CON} POW:${s.POW} DEX:${s.DEX} APP:${s.APP}`,
-    `SIZ:${s.SIZ} INT:${s.INT} EDU:${s.EDU} DB:${d.DB}`,
-    `幸運:${d.Luck} アイデア:${d.Idea} 知識:${d.Know}`,
-    '',
-    c.story,
-  ].join('\n');
-
   return JSON.stringify({
     kind:'character',
     data:{
@@ -684,8 +675,9 @@ function toCoco(c){
       initiative:s.DEX,
       externalUrl:'',
       iconUrl:'',
-      memo,
       size:3,
+      width:3,
+      height:3,
       commands:cmds,
       status:[
         {label:'HP', value:d.HP, max:d.HP},
