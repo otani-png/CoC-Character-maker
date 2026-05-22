@@ -645,38 +645,53 @@ function toText(c){
 }
 
 function toCoco(c){
-  const {derived:d,skills:sk}=c;
-  const cmds=Object.entries(sk)
-    .filter(([,v])=>v>0)
+  const {stats:s,derived:d,skills:sk}=c;
+
+  const skillCmds=Object.entries(sk)
+    .filter(([k,v])=>v>0&&k!=='クトゥルフ神話'&&k!=='母国語')
     .sort((a,b)=>b[1]-a[1])
-    .map(([k,v])=>`1D100<=${v} ${k}`)
+    .map(([k,v])=>`CCB<=${v} 【${k}】`)
     .join('\n');
-  const memo=[
-    `職業: ${c.occupation}　性別: ${c.sex}　年齢: ${c.age}歳`,
-    `STR:${c.stats.STR} CON:${c.stats.CON} POW:${c.stats.POW} DEX:${c.stats.DEX}`,
-    `APP:${c.stats.APP} SIZ:${c.stats.SIZ} INT:${c.stats.INT} EDU:${c.stats.EDU}`,
-    `DB:${d.DB}　幸運:${d.Luck}　アイデア:${d.Idea}　知識:${d.Know}`,
+
+  const cmds=[
+    `1d100<={SAN} 【正気度ロール】`,
+    `CCB<=${d.Idea} 【アイデア】`,
+    `CCB<=${d.Luck} 【幸運】`,
+    `CCB<=${d.Know} 【知識】`,
+    skillCmds,
+    `CCB<={STR}*5 【STR×5】`,
+    `CCB<={CON}*5 【CON×5】`,
+    `CCB<={POW}*5 【POW×5】`,
+    `CCB<={DEX}*5 【DEX×5】`,
+    `CCB<={APP}*5 【APP×5】`,
+    `CCB<={SIZ}*5 【SIZ×5】`,
+    `CCB<={INT}*5 【INT×5】`,
+    `CCB<={EDU}*5 【EDU×5】`,
   ].join('\n');
+
   return JSON.stringify({
     kind:'character',
     data:{
       name:c.name,
-      initiative:0,externalUrl:'',
-      memo,size:1,width:1,height:1,x:0,y:0,angle:0,alpha:1,
-      color:'#ffffff',commands:cmds,
-      secret:false,invisible:false,hideStatus:false,iconUrl:'',
+      initiative:s.DEX,
+      externalUrl:'',
+      iconUrl:'',
+      commands:cmds,
       status:[
-        {label:'HP', value:String(d.HP), max:String(d.HP)},
-        {label:'MP', value:String(d.MP), max:String(d.MP)},
-        {label:'SAN',value:String(d.SAN),max:String(d.SAN)},
+        {label:'HP', value:d.HP, max:d.HP},
+        {label:'MP', value:d.MP, max:d.MP},
+        {label:'SAN',value:d.SAN,max:d.SAN},
       ],
       params:[
-        {label:'幸運',    value:String(d.Luck)},
-        {label:'アイデア',value:String(d.Idea)},
-        {label:'知識',    value:String(d.Know)},
-        {label:'DB',      value:String(d.DB)},
+        {label:'STR',value:String(s.STR)},
+        {label:'CON',value:String(s.CON)},
+        {label:'POW',value:String(s.POW)},
+        {label:'DEX',value:String(s.DEX)},
+        {label:'APP',value:String(s.APP)},
+        {label:'SIZ',value:String(s.SIZ)},
+        {label:'INT',value:String(s.INT)},
+        {label:'EDU',value:String(s.EDU)},
       ],
-      tokens:[],
     }
   });
 }
