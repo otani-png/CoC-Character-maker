@@ -6,25 +6,24 @@
 <title>深淵の書 — クトゥルフ神話TRPG</title>
 <style>
 :root {
-  --bg: #07090504;
-  --bg: #080c06;
-  --stone-d: #101610;
-  --stone:   #161e12;
-  --stone-l: #1e2a18;
-  --stone-ll:#263420;
-  --gold:    #c8a030;
-  --gold2:   #e8c858;
-  --moss:    #3a5e28;
-  --moss2:   #5a8a40;
-  --text:    #d8cc9a;
-  --text-dim:#8a9068;
-  --border:  #2a3a1e;
-  --border2: #3e5428;
-  --border-g:#6a5018;
-  --hp:      #b83828;
-  --mp:      #2858a8;
-  --san:     #4060a0;
-  --parchment:#c8ba88;
+  --bg:      #16200f;
+  --stone-d: #1e2c16;
+  --stone:   #263820;
+  --stone-l: #2e4428;
+  --stone-ll:#385230;
+  --gold:    #d4b040;
+  --gold2:   #f0d060;
+  --moss:    #4e7a32;
+  --moss2:   #72aa4a;
+  --text:    #eedcaa;
+  --text-dim:#9aaa78;
+  --border:  #344a24;
+  --border2: #4e6a34;
+  --border-g:#7a6020;
+  --hp:      #cc4030;
+  --mp:      #3068c0;
+  --san:     #5080be;
+  --parchment:#dece98;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}
@@ -669,6 +668,15 @@ function toCoco(c){
     `CCB<={EDU}*5 【EDU×5】`,
   ].join('\n');
 
+  const memo=[
+    `【${c.occupation}】${c.sex}・${c.age}歳`,
+    `STR:${s.STR} CON:${s.CON} POW:${s.POW} DEX:${s.DEX} APP:${s.APP}`,
+    `SIZ:${s.SIZ} INT:${s.INT} EDU:${s.EDU} DB:${d.DB}`,
+    `幸運:${d.Luck} アイデア:${d.Idea} 知識:${d.Know}`,
+    '',
+    c.story,
+  ].join('\n');
+
   return JSON.stringify({
     kind:'character',
     data:{
@@ -676,6 +684,8 @@ function toCoco(c){
       initiative:s.DEX,
       externalUrl:'',
       iconUrl:'',
+      memo,
+      size:3,
       commands:cmds,
       status:[
         {label:'HP', value:d.HP, max:d.HP},
