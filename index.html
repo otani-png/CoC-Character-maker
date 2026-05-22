@@ -6,8 +6,7 @@
 <title>深淵の書 — クトゥルフ神話TRPG</title>
 <style>
 :root {
-  --bg:      #16200f;
-  --stone-d: #1e2c16;
+  --bg:      #16200f;  --stone-d: #1e2c16;
   --stone:   #263820;
   --stone-l: #2e4428;
   --stone-ll:#385230;
@@ -99,7 +98,7 @@ select,input{
 }
 select:hover,input:hover{border-color:var(--gold)}
 select:focus,input:focus{border-color:var(--gold2)}
-input[type=number]{width:70px}
+input[type=number]{width:88px}
 .spacer{flex:1}
 .btn-gen{
   background:linear-gradient(135deg,var(--moss),var(--moss2));
@@ -207,11 +206,10 @@ input[type=number]{width:70px}
   background:var(--gold);opacity:.2;
 }
 .d-box .dl{font-size:9px;letter-spacing:.15em;color:var(--text-dim);text-transform:uppercase}
-.d-box .dv{font-size:24px;font-weight:bold;margin-top:2px}
-.d-box.hp .dv{color:var(--hp)}
-.d-box.mp .dv{color:var(--mp)}
+.d-box .dv{font-size:24px;font-weight:bold;margin-top:2px;color:var(--gold2)}
+.d-box.hp  .dv{color:var(--hp)}
+.d-box.mp  .dv{color:var(--mp)}
 .d-box.san .dv{color:var(--san)}
-.d-box .dv{color:var(--gold2)}
 
 /* ── GRID ── */
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
@@ -320,7 +318,7 @@ input[type=number]{width:70px}
   </div>
   <div class="ctrl-group">
     <span class="ctrl-label">年齢</span>
-    <input type="number" id="inp-age" min="14" max="80" placeholder="乱">
+    <input type="number" id="inp-age" min="14" max="80" placeholder="ランダム">
   </div>
   <button class="btn-gen" id="btn-gen">⚅ &nbsp;キャラクターを召喚する</button>
   <div class="spacer"></div>
