@@ -305,6 +305,13 @@ input[type=number]{width:88px}
 
 <div class="controls">
   <div class="ctrl-group">
+    <span class="ctrl-label">版</span>
+    <select id="sel-edition">
+      <option value="6">6版</option>
+      <option value="7">7版</option>
+    </select>
+  </div>
+  <div class="ctrl-group">
     <span class="ctrl-label">性別</span>
     <select id="sel-sex">
       <option value="random">ランダム</option>
@@ -466,7 +473,7 @@ function db(str,siz){
   return'+2d6';
 }
 
-function distrib(names,total,cur){
+function distrib(names,total,cur,cap=90){
   const r={};names.forEach(n=>r[n]=cur[n]??BASE[n]??1);
   if(!names.length||total<=0)return r;
   const w=names.map(()=>Math.random()*.8+.2);
@@ -476,7 +483,7 @@ function distrib(names,total,cur){
   al[al.length-1]+=total-as;
   let left=0;
   names.forEach((n,i)=>{
-    const base=r[n],room=Math.max(0,90-base);
+    const base=r[n],room=Math.max(0,cap-base);
     const add=clamp(al[i]+left,0,room);
     left=al[i]+left-add;
     r[n]=base+add;
@@ -484,11 +491,50 @@ function distrib(names,total,cur){
   if(left>0){
     for(const n of [...names].sort(()=>Math.random()-.5)){
       if(left<=0)break;
-      const room=90-r[n];
+      const room=cap-r[n];
       if(room>0){const add=Math.min(room,left);r[n]+=add;left-=add;}
     }
   }
   return r;
+}
+
+// =====================
+// 7TH EDITION (7版) — データ＆ヘルパー
+// =====================
+// 7版で基礎値が変わる主な技能（6版BASEからの上書き）。確証のあるものだけ。詳細は NOTES_7版対応.md
+const BASE7={
+  '聞き耳':20,'図書館':20,'忍び歩き':20,'説得':10,'心理学':10,
+  '会計':5,'歴史':5,'医学':1,'機械修理':10,'コンピューター':5,'変装':5,
+  '登攀':20,'跳躍':20,'水泳':20,'投擲':20,'こぶし':25,
+};
+const base7=k=>(k in BASE7)?BASE7[k]:(BASE[k]??1);
+
+// 7版 ダメージボーナス＆ビルド（STR+SIZ の合計／能力値は×5スケール）
+function dbBuild7(str,siz){
+  const t=str+siz;
+  if(t<=64)  return {db:'-2',  build:-2};
+  if(t<=84)  return {db:'-1',  build:-1};
+  if(t<=124) return {db:'0',   build:0};
+  if(t<=164) return {db:'+1d4',build:1};
+  if(t<=204) return {db:'+1d6',build:2};
+  if(t<=284) return {db:'+2d6',build:3};
+  if(t<=364) return {db:'+3d6',build:4};
+  if(t<=444) return {db:'+4d6',build:5};
+  return {db:'+5d6',build:6};
+}
+
+// 7版 移動力(MOV)：STR/DEX と SIZ の比較 ＋ 年齢補正
+function mov7(str,dex,siz,age){
+  let mov;
+  if(str<siz&&dex<siz)mov=7;
+  else if(str>siz&&dex>siz)mov=9;
+  else mov=8;
+  if(age>=80)mov-=5;
+  else if(age>=70)mov-=4;
+  else if(age>=60)mov-=3;
+  else if(age>=50)mov-=2;
+  else if(age>=40)mov-=1;
+  return Math.max(mov,1);
 }
 
 // =====================
@@ -497,6 +543,7 @@ function distrib(names,total,cur){
 let CHAR=null;
 
 function generate(){
+  const edition=document.getElementById('sel-edition').value;
   const sexV=document.getElementById('sel-sex').value;
   const jobV=document.getElementById('sel-job').value;
   const ageV=document.getElementById('inp-age').value;
@@ -505,16 +552,20 @@ function generate(){
   const name=pick(LN)+' '+pick(sex==='男性'?FM:FF);
   const age=ageV?parseInt(ageV):Math.floor(Math.random()*48)+18;
 
+  CHAR=edition==='7'
+    ? generate7({sex,name,age,jobV})
+    : generate6({sex,name,age,jobV});
+  CHAR.story=makeStory(CHAR);
+  return CHAR;
+}
+
+// ── 6版 ──
+function generate6({sex,name,age,jobV}){
   const stats={STR:r3d6(),CON:r3d6(),POW:r3d6(),DEX:r3d6(),APP:r3d6(),SIZ:r2d6p6(),INT:r2d6p6(),EDU:r3d6p3()};
   const {STR,CON,POW,DEX,APP,SIZ,INT,EDU}=stats;
 
   const HP=Math.floor((CON+SIZ)/2);
-  const MP=POW;
-  const SAN=POW*5;
-  const Luck=POW*5;
-  const Idea=INT*5;
-  const Know=EDU*5;
-  const DB=db(STR,SIZ);
+  const MP=POW, SAN=POW*5, Luck=POW*5, Idea=INT*5, Know=EDU*5, DB=db(STR,SIZ);
 
   const occ=jobV==='random'?pick(OCC):OCC.find(o=>o.name===jobV)||pick(OCC);
 
@@ -530,11 +581,45 @@ function generate(){
   const hobbyPick=[...hobbyPool].sort(()=>Math.random()-.5).slice(0,6);
   Object.assign(sk,distrib(hobbyPick,INT*10,sk));
 
-  CHAR={name,sex,age,occupation:occ.name,primarySkills:occ.skills,
+  return {edition:'6',name,sex,age,occupation:occ.name,primarySkills:occ.skills,
         stats,skills:sk,derived:{HP,MP,SAN,Luck,Idea,Know,DB},
         occPts,hobbyPts:INT*10,story:null};
-  CHAR.story=makeStory(CHAR);
-  return CHAR;
+}
+
+// ── 7版 ──（能力値は×5スケール。詳細な根拠は NOTES_7版対応.md）
+function generate7({sex,name,age,jobV}){
+  const stats={
+    STR:r3d6()*5, CON:r3d6()*5, POW:r3d6()*5, DEX:r3d6()*5, APP:r3d6()*5,
+    SIZ:r2d6p6()*5, INT:r2d6p6()*5, EDU:r2d6p6()*5,
+  };
+  const {STR,CON,POW,DEX,APP,SIZ,INT,EDU}=stats;
+
+  const HP=Math.floor((CON+SIZ)/10);
+  const MP=Math.floor(POW/5);
+  const SAN=POW;
+  const Luck=r3d6()*5;                 // 7版は幸運を独立してロール
+  const {db:DB,build:Build}=dbBuild7(STR,SIZ);
+  const MOV=mov7(STR,DEX,SIZ,age);
+
+  const occ=jobV==='random'?pick(OCC):OCC.find(o=>o.name===jobV)||pick(OCC);
+
+  let sk={};
+  Object.keys(BASE).forEach(k=>sk[k]=base7(k));
+  sk['回避']=Math.floor(DEX/2);        // 7版 回避＝DEX/2
+  sk['母国語']=EDU;                    // 7版 母国語＝EDU
+
+  const occPts=EDU*4;                  // 簡易：7版職業ポイント＝EDU×4（本来は職業ごとに異なる）
+  Object.assign(sk,distrib(occ.skills,occPts,sk,75));   // 7版 作成時上限75
+  sk['信用']=Math.floor(Math.random()*(occ.cr[1]-occ.cr[0])+occ.cr[0]);
+
+  const hobbyPts=INT*2;                // 7版 趣味/興味技能＝INT×2
+  const hobbyPool=Object.keys(sk).filter(k=>!occ.skills.includes(k)&&k!=='クトゥルフ神話'&&k!=='母国語'&&k!=='信用');
+  const hobbyPick=[...hobbyPool].sort(()=>Math.random()-.5).slice(0,6);
+  Object.assign(sk,distrib(hobbyPick,hobbyPts,sk,75));
+
+  return {edition:'7',name,sex,age,occupation:occ.name,primarySkills:occ.skills,
+        stats,skills:sk,derived:{HP,MP,SAN,Luck,DB,Build,MOV},
+        occPts,hobbyPts,story:null};
 }
 
 // =====================
@@ -542,11 +627,14 @@ function generate(){
 // =====================
 function render(c){
   const {stats:s,derived:d,skills:sk,primarySkills:ps}=c;
+  const e7=c.edition==='7';
   const sh=document.getElementById('sheet');
 
   const dBox=(cls,label,val)=>`<div class="d-box ${cls}"><div class="dl">${label}</div><div class="dv">${val}</div></div>`;
 
-  const statBox=(k,v)=>`<div class="stat-box"><div class="sn">${k}</div><div class="sv">${v}</div><div class="sx">×5&nbsp;=&nbsp;${v*5}</div></div>`;
+  const statBox=e7
+    ? (k,v)=>`<div class="stat-box"><div class="sn">${k}</div><div class="sv">${v}</div><div class="sx">½&nbsp;${Math.floor(v/2)}&nbsp;·&nbsp;⅕&nbsp;${Math.floor(v/5)}</div></div>`
+    : (k,v)=>`<div class="stat-box"><div class="sn">${k}</div><div class="sv">${v}</div><div class="sx">×5&nbsp;=&nbsp;${v*5}</div></div>`;
 
   const skRow=(k,v)=>{
     const pct=Math.min(v,90);
@@ -579,8 +667,9 @@ function render(c){
     ${dBox('mp','MP',d.MP)}
     ${dBox('san','SAN',d.SAN)}
     ${dBox('','幸運',d.Luck)}
-    ${dBox('','アイデア',d.Idea)}
-    ${dBox('','知識',d.Know)}
+    ${e7
+      ? dBox('','移動',d.MOV)+dBox('','ビルド',(d.Build>=0?'+':'')+d.Build)
+      : dBox('','アイデア',d.Idea)+dBox('','知識',d.Know)}
   </div>
 </div>
 
@@ -611,6 +700,8 @@ function render(c){
 </div>
 `;
 
+  document.querySelector('.gate-sub').innerHTML=
+    `Cthulhu Mythos TRPG &nbsp;·&nbsp; ${e7?'7th':'6th'} Edition &nbsp;·&nbsp; Character Creator`;
   document.getElementById('empty').style.display='none';
   sh.style.display='block';
 }
@@ -620,18 +711,22 @@ function render(c){
 // =====================
 function toText(c){
   const {stats:s,derived:d,skills:sk,primarySkills:ps}=c;
+  const e7=c.edition==='7';
+  const baseOf=e7?base7:(k=>BASE[k]??0);
+  const derivedLine=e7
+    ? `HP:${d.HP}  MP:${d.MP}  SAN:${d.SAN}  幸運:${d.Luck}  移動:${d.MOV}  ビルド:${d.Build>=0?'+':''}${d.Build}  DB:${d.DB}`
+    : `HP:${d.HP}  MP:${d.MP}  SAN:${d.SAN}  幸運:${d.Luck}  アイデア:${d.Idea}  知識:${d.Know}\nDB:${d.DB}`;
   return[
-    '=== クトゥルフ神話TRPG 6版 キャラクターシート ===',
+    `=== クトゥルフ神話TRPG ${e7?'7版':'6版'} キャラクターシート ===`,
     `名前: ${c.name}　性別: ${c.sex}　年齢: ${c.age}歳　職業: ${c.occupation}`,
     '',
     `STR:${s.STR}  CON:${s.CON}  POW:${s.POW}  DEX:${s.DEX}`,
     `APP:${s.APP}  SIZ:${s.SIZ}  INT:${s.INT}  EDU:${s.EDU}`,
-    `HP:${d.HP}  MP:${d.MP}  SAN:${d.SAN}  幸運:${d.Luck}  アイデア:${d.Idea}  知識:${d.Know}`,
-    `DB:${d.DB}`,
+    derivedLine,
     '',
     '--- 技能（＊職業技能）---',
     ...CATS.map(cat=>{
-      const rows=cat.keys.filter(k=>k in sk&&(sk[k]>(BASE[k]??0)+5||ps.includes(k)));
+      const rows=cat.keys.filter(k=>k in sk&&(sk[k]>baseOf(k)+5||ps.includes(k)));
       if(!rows.length)return null;
       return[`[${cat.label}]`,...rows.map(k=>`  ${ps.includes(k)?'＊':'　'}${k}: ${sk[k]}`)].join('\n');
     }).filter(Boolean),
@@ -643,6 +738,7 @@ function toText(c){
 
 function toCoco(c){
   const {stats:s,derived:d,skills:sk}=c;
+  const e7=c.edition==='7';
 
   const skillCmds=Object.entries(sk)
     .filter(([k,v])=>v>0&&k!=='クトゥルフ神話'&&k!=='母国語')
@@ -650,21 +746,22 @@ function toCoco(c){
     .map(([k,v])=>`CCB<=${v} 【${k}】`)
     .join('\n');
 
-  const cmds=[
-    `1d100<={SAN} 【正気度ロール】`,
-    `CCB<=${d.Idea} 【アイデア】`,
-    `CCB<=${d.Luck} 【幸運】`,
-    `CCB<=${d.Know} 【知識】`,
-    skillCmds,
-    `CCB<={STR}*5 【STR×5】`,
-    `CCB<={CON}*5 【CON×5】`,
-    `CCB<={POW}*5 【POW×5】`,
-    `CCB<={DEX}*5 【DEX×5】`,
-    `CCB<={APP}*5 【APP×5】`,
-    `CCB<={SIZ}*5 【SIZ×5】`,
-    `CCB<={INT}*5 【INT×5】`,
-    `CCB<={EDU}*5 【EDU×5】`,
-  ].join('\n');
+  const ABILS=['STR','CON','POW','DEX','APP','SIZ','INT','EDU'];
+  const charCmds=e7
+    ? ABILS.map(k=>`CCB<={${k}} 【${k}】`).join('\n')          // 7版：能力値はすでに%なので×5しない
+    : ABILS.map(k=>`CCB<={${k}}*5 【${k}×5】`).join('\n');
+
+  const cmds=(e7
+    ? [`1d100<={SAN} 【正気度ロール】`,`CCB<=${d.Luck} 【幸運】`,skillCmds,charCmds]
+    : [`1d100<={SAN} 【正気度ロール】`,`CCB<=${d.Idea} 【アイデア】`,`CCB<=${d.Luck} 【幸運】`,`CCB<=${d.Know} 【知識】`,skillCmds,charCmds]
+  ).join('\n');
+
+  const params=ABILS.map(k=>({label:k,value:String(s[k])}));
+  if(e7){
+    params.push({label:'MOV',value:String(d.MOV)});
+    params.push({label:'ビルド',value:(d.Build>=0?'+':'')+d.Build});
+    params.push({label:'DB',value:d.DB});
+  }
 
   return JSON.stringify({
     kind:'character',
@@ -682,16 +779,7 @@ function toCoco(c){
         {label:'MP', value:d.MP, max:d.MP},
         {label:'SAN',value:d.SAN,max:d.SAN},
       ],
-      params:[
-        {label:'STR',value:String(s.STR)},
-        {label:'CON',value:String(s.CON)},
-        {label:'POW',value:String(s.POW)},
-        {label:'DEX',value:String(s.DEX)},
-        {label:'APP',value:String(s.APP)},
-        {label:'SIZ',value:String(s.SIZ)},
-        {label:'INT',value:String(s.INT)},
-        {label:'EDU',value:String(s.EDU)},
-      ],
+      params,
     }
   });
 }
