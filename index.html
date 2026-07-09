@@ -503,9 +503,17 @@ function generate(){
 
   const sex=sexV==='random'?pick(['男性','女性']):sexV;
   const name=pick(LN)+' '+pick(sex==='男性'?FM:FF);
-  const age=ageV?parseInt(ageV):Math.floor(Math.random()*48)+18;
 
   const stats={STR:r3d6(),CON:r3d6(),POW:r3d6(),DEX:r3d6(),APP:r3d6(),SIZ:r2d6p6(),INT:r2d6p6(),EDU:r3d6p3()};
+
+  // 6版ルール：探索者の最低年齢 = EDU + 6
+  let age;
+  if(ageV){
+    age=clamp(parseInt(ageV),14,80);
+    stats.EDU=Math.min(stats.EDU,age-6);
+  }else{
+    age=Math.max(stats.EDU+6,Math.floor(Math.random()*48)+18);
+  }
   const {STR,CON,POW,DEX,APP,SIZ,INT,EDU}=stats;
 
   const HP=Math.floor((CON+SIZ)/2);
@@ -650,12 +658,25 @@ function toCoco(c){
     .map(([k,v])=>`CCB<=${v} 【${k}】`)
     .join('\n');
 
+  const dbSuf=d.DB==='0'?'+0':d.DB;
+  const dmgCmds=[
+    `1d3${dbSuf} 【ダメージ：こぶし】`,
+    `1d6${dbSuf} 【ダメージ：キック】`,
+    `1d4${dbSuf} 【ダメージ：頭突き】`,
+    `1d4${dbSuf} 【ダメージ：刃物】`,
+  ];
+  if(sk['拳銃']>BASE['拳銃'])dmgCmds.push(`1d10 【ダメージ：拳銃】`);
+  if(sk['ライフル']>BASE['ライフル'])dmgCmds.push(`2d6+4 【ダメージ：ライフル】`);
+  if(sk['ショットガン']>BASE['ショットガン'])dmgCmds.push(`4d6 【ダメージ：ショットガン(至近)】`);
+  if(sk['サブマシンガン']>BASE['サブマシンガン'])dmgCmds.push(`1d10+2 【ダメージ：サブマシンガン】`);
+
   const cmds=[
     `1d100<={SAN} 【正気度ロール】`,
     `CCB<=${d.Idea} 【アイデア】`,
     `CCB<=${d.Luck} 【幸運】`,
     `CCB<=${d.Know} 【知識】`,
     skillCmds,
+    dmgCmds.join('\n'),
     `CCB<={STR}*5 【STR×5】`,
     `CCB<={CON}*5 【CON×5】`,
     `CCB<={POW}*5 【POW×5】`,
