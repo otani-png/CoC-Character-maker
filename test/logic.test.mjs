@@ -2,7 +2,9 @@
 // 実行: node test/logic.test.mjs   （npm不要・素のNodeで動く）
 import { readFileSync } from 'fs';
 
-const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+// TARGET_HTML 環境変数で別ファイルを検証できる（例: 7版ブランチの回帰確認）
+const target = process.env.TARGET_HTML ?? new URL('../index.html', import.meta.url);
+const html = readFileSync(target, 'utf8');
 const m = html.match(/<script>([\s\S]*)<\/script>/);
 if (!m) { console.error('script tag not found'); process.exit(1); }
 
