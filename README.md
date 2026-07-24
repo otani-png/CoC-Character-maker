@@ -1,6 +1,7 @@
-# 深淵の書 — CoC キャラシメーカー
+# キャラシメーカー（深淵の書）
 
 クトゥルフ神話TRPG（6版）のキャラクターシートを、ボタン1つで生成するWebツール。
+UIは姉妹ツール [成長判定ツール（研鑽の書）](https://github.com/otani-png/ccfolia-growth-tool) と同じデザインシステム（ライト／ダーク自動切替）で揃えてある。
 
 **→ 公開ページ: https://otani-png.github.io/CoC-Character-maker/**
 

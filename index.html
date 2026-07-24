@@ -3,335 +3,231 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>深淵の書 — クトゥルフ神話TRPG</title>
+<title>キャラシメーカー — クトゥルフ神話TRPG（CoC6版）</title>
+<meta name="description" content="ボタンひとつでクトゥルフ神話TRPG6版の探索者を生成するツール。能力値・職業技能・背景設定に加えて、ココフォリアの駒データも出力できる。">
+<meta name="color-scheme" content="light dark">
+<meta property="og:type" content="website">
+<meta property="og:title" content="キャラシメーカー — クトゥルフ神話TRPG（CoC6版）">
+<meta property="og:description" content="ボタンひとつでCoC6版の探索者を1人ぶん生成。背景設定つき、ココフォリアの駒データもそのまま貼れる。">
+<meta name="twitter:card" content="summary">
 <style>
-:root {
-  --bg:      #16200f;  --stone-d: #1e2c16;
-  --stone:   #263820;
-  --stone-l: #2e4428;
-  --stone-ll:#385230;
-  --gold:    #d4b040;
-  --gold2:   #f0d060;
-  --moss:    #4e7a32;
-  --moss2:   #72aa4a;
-  --text:    #eedcaa;
-  --text-dim:#9aaa78;
-  --border:  #344a24;
-  --border2: #4e6a34;
-  --border-g:#7a6020;
-  --hp:      #cc4030;
-  --mp:      #3068c0;
-  --san:     #5080be;
-  --parchment:#dece98;
+:root{
+  --bg:#f4f5f7; --surface:#ffffff; --surface-2:#f3f4f7;
+  --text:#15181d; --text-dim:#646b76; --text-faint:#a0a6b0;
+  --border:#ebedf1; --border-2:#dde0e6;
+  --accent:#4338ca; --accent-h:#372fb0; --accent-soft:#eef0ff;
+  --ok:#1f9d6b; --hp:#d65450; --mp:#3b6fe0; --san:#7c5cd6;
+  --radius:14px;
+  --shadow-sm:0 1px 2px rgba(20,24,33,.05);
+  --shadow:0 1px 2px rgba(20,24,33,.04), 0 6px 18px -6px rgba(20,24,33,.10);
+  --shadow-lg:0 12px 32px -10px rgba(20,24,33,.22);
+  --body-hi:#ffffff;
+  --toast-bg:#15181d; --toast-fg:#ffffff;
+  --btn-glow:0 1px 2px rgba(67,56,202,.25), 0 6px 16px -8px rgba(67,56,202,.5);
+  --btn-glow-h:0 2px 4px rgba(67,56,202,.28), 0 12px 22px -10px rgba(67,56,202,.6);
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0e1013; --surface:#171a1f; --surface-2:#20242d;
+    --text:#e7e9ee; --text-dim:#9aa1ad; --text-faint:#5f6674;
+    --border:#252a33; --border-2:#333a45;
+    --accent:#8b83ff; --accent-h:#9d96ff; --accent-soft:rgba(139,131,255,.16);
+    --ok:#37c78f; --hp:#e87571; --mp:#5f8dff; --san:#a48bff;
+    --shadow-sm:0 1px 2px rgba(0,0,0,.35);
+    --shadow:0 1px 2px rgba(0,0,0,.3), 0 8px 22px -8px rgba(0,0,0,.55);
+    --shadow-lg:0 14px 36px -10px rgba(0,0,0,.7);
+    --body-hi:rgba(139,131,255,.06);
+    --toast-bg:#272c36; --toast-fg:#f2f4f8;
+    --btn-glow:0 1px 2px rgba(0,0,0,.4), 0 6px 16px -8px rgba(139,131,255,.5);
+    --btn-glow-h:0 2px 6px rgba(0,0,0,.45), 0 12px 24px -10px rgba(139,131,255,.65);
+  }
 }
 *{box-sizing:border-box;margin:0;padding:0}
-html{scroll-behavior:smooth}
 body{
-  background:var(--bg);
+  background:
+    radial-gradient(1200px 480px at 50% -10%, var(--body-hi) 0%, rgba(255,255,255,0) 70%),
+    var(--bg);
   color:var(--text);
-  font-family:'Hiragino Mincho ProN','Yu Mincho','MS Mincho','Georgia',serif;
-  font-size:14px;
-  min-height:100vh;
-  background-image:
-    radial-gradient(ellipse at 15% 30%, rgba(58,94,40,.07) 0%,transparent 55%),
-    radial-gradient(ellipse at 85% 70%, rgba(200,160,48,.04) 0%,transparent 50%);
+  font-family:'Inter','Segoe UI','Hiragino Sans','Yu Gothic UI','Noto Sans JP',system-ui,sans-serif;
+  font-size:14px; line-height:1.6; min-height:100vh;
+  -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+  font-feature-settings:"palt" 1;
 }
 
-/* ── GATE HEADER ── */
-.gate{
-  position:relative;
-  background:linear-gradient(180deg,#050804 0%,#0d1409 60%,#111810 100%);
-  border-bottom:1px solid var(--border2);
-  padding:28px 24px 22px;
-  text-align:center;
-  overflow:hidden;
-}
-.gate::before,.gate::after{
-  content:'';
-  position:absolute;
-  top:0;bottom:0;width:3px;
-  background:linear-gradient(180deg,transparent,var(--gold),transparent);
-  opacity:.4;
-}
-.gate::before{left:20px}
-.gate::after{right:20px}
-.gate-rune{
-  font-size:11px;letter-spacing:6px;color:var(--gold);opacity:.5;
-  margin-bottom:8px;font-style:normal;font-family:monospace;
-}
-.gate h1{
-  font-size:30px;letter-spacing:.25em;color:var(--gold2);
-  text-shadow:0 0 30px rgba(200,160,48,.4),0 2px 4px rgba(0,0,0,.8);
-  font-weight:normal;margin-bottom:4px;
-}
-.gate-sub{
-  font-size:10px;letter-spacing:.35em;color:var(--text-dim);
-  text-transform:uppercase;margin-bottom:14px;
-}
-.gate-line{
-  display:flex;align-items:center;justify-content:center;gap:10px;
-  color:var(--border2);font-size:12px;
-}
-.gate-line::before,.gate-line::after{
-  content:'';flex:1;max-width:100px;
-  height:1px;background:linear-gradient(90deg,transparent,var(--border2));
-}
-.gate-line::after{background:linear-gradient(90deg,var(--border2),transparent)}
+/* head */
+.head{padding:40px 24px 8px}
+.head-in{max-width:880px;margin:0 auto}
+.eyebrow{font-size:11px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);margin-bottom:10px}
+.head h1{font-size:27px;font-weight:700;letter-spacing:-.02em;color:var(--text);line-height:1.2}
+.head-sub{font-size:14px;color:var(--text-dim);margin-top:8px;max-width:620px}
+.wrap{max-width:880px;margin:0 auto;padding:24px}
 
-/* ── CONTROLS ── */
-.controls{
-  background:var(--stone-d);
-  border-bottom:1px solid var(--border);
-  padding:14px 20px;
-  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+/* input */
+.input-block{margin-bottom:26px}
+.lbl{font-size:13px;font-weight:600;color:var(--text);margin-bottom:9px;display:block}
+.fields{display:flex;gap:12px;flex-wrap:wrap}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-size:12px;color:var(--text-dim);font-weight:500}
+select,input[type=number]{
+  background:var(--surface); border:1px solid var(--border-2); border-radius:9px;
+  color:var(--text); padding:9px 12px; font-size:13px; font-family:inherit;
+  outline:none; cursor:pointer; box-shadow:var(--shadow-sm);
+  transition:border-color .18s, box-shadow .18s;
 }
-.ctrl-group{display:flex;align-items:center;gap:6px}
-.ctrl-label{font-size:11px;color:var(--text-dim);letter-spacing:.05em;white-space:nowrap}
-select,input{
-  background:var(--stone-l);
-  border:1px solid var(--border2);
-  border-radius:3px;
-  color:var(--text);
-  padding:6px 8px;font-size:12px;
-  font-family:inherit;outline:none;cursor:pointer;
-  transition:border-color .2s;
+select{min-width:132px}
+input[type=number]{width:132px;cursor:text;font-variant-numeric:tabular-nums}
+select:hover,input[type=number]:hover{border-color:var(--text-faint)}
+select:focus,input[type=number]:focus{border-color:var(--accent);box-shadow:0 0 0 4px var(--accent-soft)}
+input::placeholder{color:var(--text-faint)}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:16px}
+.btn{
+  background:var(--accent); border:1px solid var(--accent); border-radius:9px;
+  color:#fff; font-size:14px; font-weight:600; font-family:inherit;
+  padding:10px 22px; cursor:pointer; box-shadow:var(--btn-glow);
+  transition:transform .15s, box-shadow .15s, background .15s;
 }
-select:hover,input:hover{border-color:var(--gold)}
-select:focus,input:focus{border-color:var(--gold2)}
-input[type=number]{width:88px}
-.spacer{flex:1}
-.btn-gen{
-  background:linear-gradient(135deg,var(--moss),var(--moss2));
-  border:1px solid var(--moss2);
-  border-radius:4px;color:#fff;
-  font-size:14px;font-weight:bold;font-family:inherit;
-  padding:8px 22px;cursor:pointer;
-  letter-spacing:.1em;
-  transition:opacity .2s,transform .1s;
-  text-shadow:0 1px 2px rgba(0,0,0,.6);
-}
-.btn-gen:hover{opacity:.85}
-.btn-gen:active{transform:scale(.97)}
+.btn:hover{background:var(--accent-h);transform:translateY(-1px);box-shadow:var(--btn-glow-h)}
+.btn:active{transform:translateY(0)}
 .btn-sm{
-  background:var(--stone-l);
-  border:1px solid var(--border2);
-  border-radius:3px;color:var(--text);
-  font-size:11px;font-family:inherit;
-  padding:6px 12px;cursor:pointer;
-  transition:border-color .2s,background .2s;
+  background:var(--surface); border:1px solid var(--border-2); border-radius:9px; color:var(--text-dim);
+  font-size:13px; font-family:inherit; font-weight:500; padding:9px 16px; cursor:pointer;
+  box-shadow:var(--shadow-sm); transition:all .15s;
 }
-.btn-sm:hover{border-color:var(--gold);background:var(--stone-ll)}
-.btn-coco{
-  background:linear-gradient(135deg,#1a3060,#2858b0);
-  border:1px solid #3070c0;
-  border-radius:3px;color:#a8c8f0;
-  font-size:11px;font-family:inherit;
-  padding:6px 12px;cursor:pointer;
-  transition:opacity .2s;
-}
-.btn-coco:hover{opacity:.85}
+.btn-sm:hover{border-color:var(--text-dim);color:var(--text);transform:translateY(-1px)}
+.btn:focus-visible,.btn-sm:focus-visible{outline:none;box-shadow:0 0 0 3px var(--bg),0 0 0 5px var(--accent)}
+.hint{font-size:12px;color:var(--text-dim);margin-top:12px;line-height:1.75}
 
-/* ── CONTENT ── */
-.content{padding:24px;max-width:960px;margin:0 auto}
-.empty-state{
-  text-align:center;padding:80px 20px;color:var(--text-dim);
-}
-.empty-glyph{font-size:48px;opacity:.25;margin-bottom:16px}
-.empty-state p{font-size:15px;letter-spacing:.1em}
-.empty-state small{font-size:11px;opacity:.6;margin-top:8px;display:block;letter-spacing:.15em}
+/* card */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:20px;box-shadow:var(--shadow);overflow:hidden}
+.card-t{display:flex;align-items:baseline;gap:10px;font-size:15px;font-weight:600;color:var(--text);padding:18px 22px 16px}
+.card-t .sub{font-weight:400;color:var(--text-faint);font-size:12px;letter-spacing:.01em}
+.card-body{padding:4px 22px 22px}
+.empty{color:var(--text-faint);text-align:center;padding:44px 20px;font-size:13px}
 
-/* ── STONE CARD ── */
-.slab{
-  background:var(--stone);
-  border:1px solid var(--border);
-  border-radius:3px;
-  position:relative;
-  overflow:hidden;
+/* character */
+.char-name{font-size:26px;font-weight:700;letter-spacing:-.01em;line-height:1.25}
+.char-meta{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
+.pill{
+  font-size:12px;color:var(--text-dim);background:var(--surface-2);
+  border:1px solid var(--border-2);border-radius:999px;padding:3px 12px;
 }
-.slab::before{
-  content:'';position:absolute;
-  top:0;left:0;right:0;height:1px;
-  background:linear-gradient(90deg,transparent,var(--gold),transparent);
-  opacity:.4;
-}
-.slab-title{
-  font-size:10px;letter-spacing:.2em;color:var(--gold);
-  text-transform:uppercase;padding:10px 14px 0;opacity:.7;
-}
+.pill.occ{color:var(--accent);background:var(--accent-soft);border-color:transparent;font-weight:600}
 
-/* ── CHARACTER HEADER ── */
-.char-header{
-  border:1px solid var(--border2);
-  border-radius:4px;
-  background:linear-gradient(135deg,var(--stone-d) 0%,var(--stone-l) 100%);
-  padding:20px 24px;margin-bottom:16px;
-  position:relative;overflow:hidden;
-}
-.char-header::after{
-  content:'';position:absolute;
-  bottom:0;left:0;right:0;height:1px;
-  background:linear-gradient(90deg,transparent,var(--gold),transparent);
-  opacity:.3;
-}
-.char-name{
-  font-size:32px;letter-spacing:.15em;color:var(--gold2);
-  text-shadow:0 0 20px rgba(200,160,48,.3);
-  line-height:1;
-}
-.char-meta{
-  display:flex;align-items:center;gap:8px;
-  margin-top:8px;flex-wrap:wrap;
-}
-.meta-tag{
-  font-size:11px;color:var(--text-dim);letter-spacing:.05em;
-}
-.occ-badge{
-  background:var(--moss);
-  border:1px solid var(--moss2);
-  border-radius:2px;
-  padding:2px 10px;font-size:12px;color:#b0d890;
-  letter-spacing:.1em;
-}
-.derived-row{
-  display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;
-}
-.d-box{
-  border:1px solid var(--border2);border-radius:3px;
-  padding:8px 14px;text-align:center;min-width:72px;
-  background:var(--stone-d);
-  position:relative;overflow:hidden;
-}
-.d-box::before{
-  content:'';position:absolute;top:0;left:0;right:0;height:1px;
-  background:var(--gold);opacity:.2;
-}
-.d-box .dl{font-size:9px;letter-spacing:.15em;color:var(--text-dim);text-transform:uppercase}
-.d-box .dv{font-size:24px;font-weight:bold;margin-top:2px;color:var(--gold2)}
-.d-box.hp  .dv{color:var(--hp)}
-.d-box.mp  .dv{color:var(--mp)}
+/* derived */
+.derived-row{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-top:18px}
+.d-box{background:var(--surface-2);border:1px solid var(--border);border-radius:11px;padding:11px 8px;text-align:center}
+.d-box .dl{font-size:10px;letter-spacing:.08em;color:var(--text-faint);font-weight:600;text-transform:uppercase}
+.d-box .dv{font-size:23px;font-weight:700;margin-top:2px;line-height:1.15;font-variant-numeric:tabular-nums;color:var(--text)}
+.d-box.hp .dv{color:var(--hp)}
+.d-box.mp .dv{color:var(--mp)}
 .d-box.san .dv{color:var(--san)}
+@media(max-width:600px){.derived-row{grid-template-columns:repeat(3,1fr)}}
 
-/* ── GRID ── */
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
-@media(max-width:700px){.grid2{grid-template-columns:1fr}}
+/* grid */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.grid2 .card{margin-bottom:20px}
+@media(max-width:720px){.grid2{grid-template-columns:1fr;gap:0}}
 
-/* ── STATS ── */
-.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:12px 14px}
-.stat-box{
-  background:var(--stone-d);border:1px solid var(--border);
-  border-radius:3px;text-align:center;padding:8px 6px;
-}
-.stat-box .sn{font-size:10px;color:var(--text-dim);letter-spacing:.1em}
-.stat-box .sv{font-size:28px;color:var(--gold2);line-height:1.1}
-.stat-box .sx{font-size:9px;color:var(--text-dim);margin-top:1px}
+/* stats */
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.stat-box{background:var(--surface-2);border:1px solid var(--border);border-radius:10px;text-align:center;padding:9px 4px}
+.stat-box .sn{font-size:10px;letter-spacing:.08em;color:var(--text-faint);font-weight:600}
+.stat-box .sv{font-size:22px;font-weight:700;line-height:1.2;font-variant-numeric:tabular-nums}
+.stat-box .sx{font-size:10px;color:var(--text-faint);font-variant-numeric:tabular-nums}
 .db-row{
   display:flex;justify-content:space-between;align-items:center;
-  padding:8px 14px;border-top:1px solid var(--border);
-  font-size:12px;
+  margin-top:14px;padding-top:13px;border-top:1px solid var(--border);
+  font-size:13px;color:var(--text-dim);
 }
-.db-val{font-size:16px;font-weight:bold;color:var(--gold)}
+.db-val{font-size:15px;font-weight:700;color:var(--text);font-variant-numeric:tabular-nums}
 
-/* ── BACKSTORY ── */
-.backstory-block{
-  margin-bottom:14px;
-  border:1px solid var(--border-g);
-  border-radius:3px;
-  background:linear-gradient(135deg,#100e08,#181208);
-  padding:18px 20px;
-  position:relative;
-}
-.backstory-block::before{
-  content:'— 記録 —';
-  position:absolute;top:-8px;left:20px;
-  background:#0f0d08;padding:0 10px;
-  font-size:9px;color:var(--gold);letter-spacing:.2em;opacity:.7;
-}
-.backstory-text{
-  color:var(--parchment);font-size:13px;line-height:1.9;
-  letter-spacing:.03em;
+/* story */
+.story{
+  font-size:14px;line-height:2;color:var(--text-dim);
+  border-left:3px solid var(--accent);border-radius:2px;
+  padding-left:16px;
 }
 
-/* ── SKILLS ── */
-.skills-block{margin-bottom:14px}
-.skill-cat-label{
-  font-size:9px;letter-spacing:.25em;color:var(--gold);
-  text-transform:uppercase;opacity:.6;
-  grid-column:1/-1;
-  padding:10px 0 4px;
-  border-bottom:1px solid var(--border);
-  margin-bottom:4px;
+/* skills */
+.skills{display:grid;grid-template-columns:repeat(3,1fr);gap:2px 22px}
+.skills.one{grid-template-columns:1fr}
+@media(max-width:640px){.skills{grid-template-columns:repeat(2,1fr)}}
+.sk-cat{
+  grid-column:1/-1;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--text-faint);padding:14px 0 6px;border-bottom:1px solid var(--border-2);margin-bottom:4px;
 }
-.skills-all{
-  display:grid;grid-template-columns:repeat(3,1fr);gap:4px 20px;
-  padding:14px;
-}
-@media(max-width:600px){.skills-all{grid-template-columns:repeat(2,1fr)}}
-.sk-row{
-  display:flex;align-items:center;gap:6px;
-  padding:3px 0;border-bottom:1px solid rgba(255,255,255,.03);
-}
-.sk-name{flex:1;font-size:11px;color:var(--text-dim)}
-.sk-row.primary .sk-name{color:var(--gold2);font-weight:bold}
-.sk-bar{width:60px;height:4px;background:var(--stone-d);border-radius:2px;overflow:hidden;flex-shrink:0}
-.sk-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--moss),var(--moss2))}
-.sk-fill.hi{background:linear-gradient(90deg,#885010,#c07820)}
-.sk-fill.ex{background:linear-gradient(90deg,#802010,#c03020)}
-.sk-val{width:26px;text-align:right;font-size:11px;color:var(--text);flex-shrink:0}
-.sk-row.primary .sk-val{color:var(--gold)}
+.sk-cat:first-child{padding-top:2px}
+.sk-row{display:flex;align-items:center;gap:9px;padding:4px 0;border-bottom:1px solid var(--border)}
+.sk-name{flex:1;font-size:12.5px;color:var(--text-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sk-row.primary .sk-name{color:var(--text);font-weight:600}
+.sk-bar{width:56px;height:6px;background:var(--surface-2);border-radius:4px;overflow:hidden;flex-shrink:0}
+.sk-fill{height:100%;border-radius:4px;background:var(--border-2)}
+.sk-row.primary .sk-fill{background:var(--accent)}
+.sk-val{width:26px;text-align:right;font-size:12.5px;color:var(--text-dim);flex-shrink:0;font-variant-numeric:tabular-nums}
+.sk-row.primary .sk-val{color:var(--text);font-weight:600}
 
-/* ── TOAST ── */
-.toast{
-  position:fixed;bottom:24px;right:24px;
-  background:var(--moss);
-  border:1px solid var(--moss2);
-  border-radius:4px;color:#c8f0a0;
-  padding:10px 20px;font-size:13px;
-  opacity:0;transform:translateY(12px);
-  transition:all .3s;pointer-events:none;z-index:999;
-  font-family:inherit;
-}
+/* toast */
+.toast{position:fixed;bottom:26px;right:26px;background:var(--toast-bg);
+  border-radius:11px;color:var(--toast-fg);padding:12px 20px;font-size:13px;font-weight:500;opacity:0;transform:translateY(12px);
+  transition:all .28s cubic-bezier(.2,.8,.2,1);pointer-events:none;z-index:99;box-shadow:var(--shadow-lg)}
 .toast.show{opacity:1;transform:translateY(0)}
+
+@media (prefers-reduced-motion:reduce){
+  *{transition:none!important;scroll-behavior:auto!important}
+  .btn:hover,.btn-sm:hover{transform:none}
+}
+@media(max-width:600px){
+  .head{padding:28px 18px 4px}
+  .head h1{font-size:23px}
+  .wrap{padding:18px}
+  .card-t,.card-body{padding-left:16px;padding-right:16px}
+  .char-name{font-size:22px}
+  select,input[type=number]{min-width:0;width:100%}
+  .field{flex:1;min-width:104px}
+}
 </style>
 </head>
 <body>
 
-<header class="gate">
-  <div class="gate-rune">✦ ✦ ✦</div>
-  <h1>深　淵　の　書</h1>
-  <div class="gate-sub">Cthulhu Mythos TRPG &nbsp;·&nbsp; 6th Edition &nbsp;·&nbsp; Character Creator</div>
-  <div class="gate-line">遺跡に刻まれし記録、汝の名を以てここに記せ</div>
+<header class="head">
+  <div class="head-in">
+    <div class="eyebrow">CoC 6th Edition · Character Creator</div>
+    <h1>キャラシメーカー</h1>
+    <div class="head-sub">ボタンひとつで、クトゥルフ神話TRPG6版の探索者を1人ぶん作ります。能力値・職業技能・背景設定に加えて、ココフォリアの駒データもそのまま持ち出せます。</div>
+  </div>
 </header>
 
-<div class="controls">
-  <div class="ctrl-group">
-    <span class="ctrl-label">性別</span>
-    <select id="sel-sex">
-      <option value="random">ランダム</option>
-      <option value="男性">男性</option>
-      <option value="女性">女性</option>
-    </select>
+<div class="wrap">
+  <div class="input-block">
+    <span class="lbl">条件</span>
+    <div class="fields">
+      <div class="field">
+        <label for="sel-sex">性別</label>
+        <select id="sel-sex">
+          <option value="random">ランダム</option>
+          <option value="男性">男性</option>
+          <option value="女性">女性</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="sel-job">職業</label>
+        <select id="sel-job"></select>
+      </div>
+      <div class="field">
+        <label for="inp-age">年齢</label>
+        <input type="number" id="inp-age" min="14" max="80" placeholder="ランダム">
+      </div>
+    </div>
+    <div class="row">
+      <button class="btn" id="btn-gen">探索者を生成する</button>
+      <button class="btn-sm" id="btn-text">テキストをコピー</button>
+      <button class="btn-sm" id="btn-coco">ココフォリアの駒をコピー</button>
+    </div>
+    <div class="hint">年齢は空欄でランダム。6版のルールに合わせて最低年齢は EDU+6 とし、年齢を指定した場合は EDU 側を調整します。ココフォリアの駒データは、コピーしてルーム上で Ctrl+V を押すだけで駒になります。</div>
   </div>
-  <div class="ctrl-group">
-    <span class="ctrl-label">職業</span>
-    <select id="sel-job"></select>
-  </div>
-  <div class="ctrl-group">
-    <span class="ctrl-label">年齢</span>
-    <input type="number" id="inp-age" min="14" max="80" placeholder="ランダム">
-  </div>
-  <button class="btn-gen" id="btn-gen">⚅ &nbsp;キャラクターを召喚する</button>
-  <div class="spacer"></div>
-  <div class="ctrl-group">
-    <button class="btn-sm" id="btn-text">📜 テキスト</button>
-    <button class="btn-coco" id="btn-coco">🎲 ココフォリア駒データ</button>
-  </div>
-</div>
 
-<div class="content">
-  <div class="empty-state" id="empty">
-    <div class="empty-glyph">🌿</div>
-    <p>遺跡の扉は、まだ閉じている</p>
-    <small>「キャラクターを召喚する」を押して封印を解け</small>
+  <div class="card" id="empty">
+    <div class="empty">「探索者を生成する」を押すと、ここにキャラクターシートが出ます。</div>
   </div>
   <div id="sheet" style="display:none"></div>
 </div>
@@ -565,68 +461,73 @@ function render(c){
 
   const dBox=(cls,label,val)=>`<div class="d-box ${cls}"><div class="dl">${label}</div><div class="dv">${val}</div></div>`;
 
-  const statBox=(k,v)=>`<div class="stat-box"><div class="sn">${k}</div><div class="sv">${v}</div><div class="sx">×5&nbsp;=&nbsp;${v*5}</div></div>`;
+  const statBox=(k,v)=>`<div class="stat-box"><div class="sn">${k}</div><div class="sv">${v}</div><div class="sx">×5 = ${v*5}</div></div>`;
 
   const skRow=(k,v)=>{
     const pct=Math.min(v,90);
-    const cls=v>=80?'ex':v>=60?'hi':'';
     const prim=ps.includes(k)?'primary':'';
     return `<div class="sk-row ${prim}">
       <span class="sk-name">${k}</span>
-      <div class="sk-bar"><div class="sk-fill ${cls}" style="width:${pct}%"></div></div>
+      <div class="sk-bar"><div class="sk-fill" style="width:${pct}%"></div></div>
       <span class="sk-val">${v}</span>
     </div>`;
   };
 
   const allSkRows=CATS.map(cat=>{
     const rows=cat.keys.filter(k=>k in sk).map(k=>skRow(k,sk[k])).join('');
-    return`<div class="skill-cat-label">${cat.label}</div>${rows}`;
+    return`<div class="sk-cat">${cat.label}</div>${rows}`;
   }).join('');
 
   sh.innerHTML=`
-<div class="char-header">
-  <div class="char-name">${c.name}</div>
-  <div class="char-meta">
-    <span class="meta-tag">${c.sex}</span>
-    <span class="meta-tag">·</span>
-    <span class="meta-tag">${c.age}歳</span>
-    <span class="meta-tag">·</span>
-    <span class="occ-badge">${c.occupation}</span>
-  </div>
-  <div class="derived-row">
-    ${dBox('hp','HP',d.HP)}
-    ${dBox('mp','MP',d.MP)}
-    ${dBox('san','SAN',d.SAN)}
-    ${dBox('','幸運',d.Luck)}
-    ${dBox('','アイデア',d.Idea)}
-    ${dBox('','知識',d.Know)}
+<div class="card">
+  <div class="card-t">探索者<span class="sub">CoC 6版</span></div>
+  <div class="card-body">
+    <div class="char-name">${c.name}</div>
+    <div class="char-meta">
+      <span class="pill">${c.sex}</span>
+      <span class="pill">${c.age}歳</span>
+      <span class="pill occ">${c.occupation}</span>
+    </div>
+    <div class="derived-row">
+      ${dBox('hp','HP',d.HP)}
+      ${dBox('mp','MP',d.MP)}
+      ${dBox('san','SAN',d.SAN)}
+      ${dBox('','幸運',d.Luck)}
+      ${dBox('','アイデア',d.Idea)}
+      ${dBox('','知識',d.Know)}
+    </div>
   </div>
 </div>
 
 <div class="grid2">
-  <div class="slab">
-    <div class="slab-title">能力値</div>
-    <div class="stat-grid">
-      ${['STR','CON','POW','DEX','APP','SIZ','INT','EDU'].map(k=>statBox(k,s[k])).join('')}
+  <div class="card">
+    <div class="card-t">能力値<span class="sub">下段は ×5 の値</span></div>
+    <div class="card-body">
+      <div class="stat-grid">
+        ${['STR','CON','POW','DEX','APP','SIZ','INT','EDU'].map(k=>statBox(k,s[k])).join('')}
+      </div>
+      <div class="db-row"><span>ダメージボーナス</span><span class="db-val">${d.DB}</span></div>
     </div>
-    <div class="db-row"><span>ダメージボーナス</span><span class="db-val">${d.DB}</span></div>
   </div>
 
-  <div class="slab">
-    <div class="slab-title">職業技能（太字）&emsp;職業P:${c.occPts} 趣味P:${c.hobbyPts}</div>
-    <div class="skills-all" style="grid-template-columns:1fr">
-      ${ps.filter(k=>k in sk).map(k=>skRow(k,sk[k])).join('')}
+  <div class="card">
+    <div class="card-t">職業技能<span class="sub">職業P ${c.occPts} / 趣味P ${c.hobbyPts}</span></div>
+    <div class="card-body">
+      <div class="skills one">
+        ${ps.filter(k=>k in sk).map(k=>skRow(k,sk[k])).join('')}
+      </div>
     </div>
   </div>
 </div>
 
-<div class="backstory-block">
-  <p class="backstory-text">${c.story}</p>
+<div class="card">
+  <div class="card-t">背景設定<span class="sub">自動生成</span></div>
+  <div class="card-body"><p class="story">${c.story}</p></div>
 </div>
 
-<div class="slab skills-block">
-  <div class="slab-title">全技能</div>
-  <div class="skills-all">${allSkRows}</div>
+<div class="card">
+  <div class="card-t">全技能<span class="sub">濃い行が職業技能</span></div>
+  <div class="card-body"><div class="skills">${allSkRows}</div></div>
 </div>
 `;
 
@@ -730,15 +631,19 @@ function toCoco(c){
 
 function copy(text,msg){
   if(navigator.clipboard&&window.isSecureContext){
-    navigator.clipboard.writeText(text).then(()=>toast(msg));
+    navigator.clipboard.writeText(text).then(()=>toast(msg)).catch(()=>fallbackCopy(text,msg));
   }else{
-    const ta=document.createElement('textarea');
-    ta.value=text;ta.style.cssText='position:fixed;opacity:0;pointer-events:none';
-    document.body.appendChild(ta);ta.focus();ta.select();
-    try{document.execCommand('copy');toast(msg);}
-    catch{toast('コピー失敗。手動でコピーしてください');}
-    document.body.removeChild(ta);
+    fallbackCopy(text,msg);
   }
+}
+
+function fallbackCopy(text,msg){
+  const ta=document.createElement('textarea');
+  ta.value=text;ta.style.cssText='position:fixed;opacity:0;pointer-events:none';
+  document.body.appendChild(ta);ta.focus();ta.select();
+  try{document.execCommand('copy');toast(msg);}
+  catch{toast('コピー失敗。手動でコピーしてください');}
+  document.body.removeChild(ta);
 }
 
 function toast(msg){
@@ -762,13 +667,16 @@ function init(){
   document.getElementById('btn-gen').addEventListener('click',()=>{
     const c=generate();render(c);
   });
+  document.getElementById('inp-age').addEventListener('keydown',e=>{
+    if(e.key==='Enter'){e.preventDefault();const c=generate();render(c);}
+  });
   document.getElementById('btn-text').addEventListener('click',()=>{
     if(!CHAR){toast('先にキャラクターを生成してください');return;}
     copy(toText(CHAR),'テキストをコピーしました');
   });
   document.getElementById('btn-coco').addEventListener('click',()=>{
     if(!CHAR){toast('先にキャラクターを生成してください');return;}
-    copy(toCoco(CHAR),'ココフォリア駒データをコピーしました');
+    copy(toCoco(CHAR),'ココフォリアの駒データをコピーしました');
   });
 }
 
