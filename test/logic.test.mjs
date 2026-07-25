@@ -9,7 +9,7 @@ const m = html.match(/<script>([\s\S]*)<\/script>/);
 if (!m) { console.error('script tag not found'); process.exit(1); }
 
 // --- DOMモック ---
-const mockValues = { 'sel-sex': 'random', 'sel-job': 'random', 'inp-age': '' };
+const mockValues = { 'sel-sex': 'random', 'sel-job': 'random', 'inp-age': '', 'sel-era': '現代', 'inp-cap': '' };
 const stubEl = id => ({
   value: mockValues[id] ?? '',
   style: {}, textContent: '', innerHTML: '',
@@ -24,7 +24,7 @@ globalThis.document = {
 };
 
 // グローバルスコープで評価し、テスト対象を掴む
-(0, eval)(m[1] + '\n;globalThis.__t={generate,toCoco,toText,makeStory,db,distrib,OCC,BASE,CATS,STORY};');
+(0, eval)(m[1] + '\n;globalThis.__t={generate,toCoco,toText,makeStory,db,distrib,OCC,BASE,CATS,STORY,ERAS};');
 const t = globalThis.__t;
 
 let pass = 0, fail = 0;
@@ -72,6 +72,40 @@ for (const ageStr of ['14', '20', '80']) {
   }
 }
 mockValues['inp-age'] = '';
+
+// --- 2b. 技能上限（cap）：信用以外の全技能が cap 以下 ---
+for (const cap of ['70', '80', '99']) {
+  for (let i = 0; i < 300; i++) {
+    mockValues['inp-cap'] = cap;
+    mockValues['sel-job'] = 'random';
+    const c = t.generate();
+    check(`cap=${cap}: 全技能<=cap（信用除く）`,
+      Object.entries(c.skills).every(([k, v]) => k === '信用' || v <= +cap));
+    check(`cap=${cap}: 母国語=min(EDU*5,cap)`, c.skills['母国語'] === Math.min(c.stats.EDU * 5, +cap));
+  }
+}
+mockValues['inp-cap'] = '';
+
+// --- 2c. 時代（era） ---
+check('ERAS: 現代あり', '現代' in t.ERAS);
+check('ERAS: 1920年代あり', '1920年代（大正〜昭和）' in t.ERAS);
+check('ERAS: 現代は技能を落とさない', t.ERAS['現代'].drop.length === 0);
+for (let i = 0; i < 300; i++) {
+  mockValues['sel-era'] = '1920年代（大正〜昭和）';
+  mockValues['sel-job'] = 'random';
+  const c = t.generate();
+  check('1920年代: コンピューター無し', !('コンピューター' in c.skills));
+  check('1920年代: 電子工学無し', !('電子工学' in c.skills));
+  check('1920年代: 出力にコンピューター混入なし', !t.toCoco(c).includes('コンピューター') && !t.toText(c).includes('コンピューター'));
+  check('1920年代: 母国語は残る', '母国語' in c.skills);
+}
+mockValues['sel-era'] = '現代';
+
+// --- 2d. 職業ポイントは全職業プラス ---
+for (const o of t.OCC) {
+  const s = { STR: 10, CON: 10, POW: 10, DEX: 10, APP: 10, SIZ: 12, INT: 12, EDU: 12 };
+  check(`occ ${o.name}: ptsが正の整数`, Number.isInteger(o.pts(s)) && o.pts(s) > 0);
+}
 
 // --- 3. ダメージボーナス境界値 ---
 check('db 12 = -1d6', t.db(6, 6) === '-1d6');
