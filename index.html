@@ -70,8 +70,8 @@ select,input[type=number]{
   outline:none; cursor:pointer; box-shadow:var(--shadow-sm);
   transition:border-color .18s, box-shadow .18s;
 }
-select{min-width:128px}
-input[type=number]{width:110px;cursor:text;font-variant-numeric:tabular-nums}
+select{min-width:110px}
+input[type=number]{width:92px;cursor:text;font-variant-numeric:tabular-nums}
 select:hover,input[type=number]:hover{border-color:var(--text-faint)}
 select:focus,input[type=number]:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
 input::placeholder{color:var(--text-faint)}
@@ -198,10 +198,6 @@ input::placeholder{color:var(--text-faint)}
     <span class="lbl">条件</span>
     <div class="fields">
       <div class="field">
-        <label for="sel-era">時代</label>
-        <select id="sel-era"></select>
-      </div>
-      <div class="field">
         <label for="sel-sex">性別</label>
         <select id="sel-sex">
           <option value="random">ランダム</option>
@@ -216,6 +212,10 @@ input::placeholder{color:var(--text-faint)}
       <div class="field">
         <label for="inp-age">年齢</label>
         <input type="number" id="inp-age" min="14" max="80" placeholder="ランダム">
+      </div>
+      <div class="field">
+        <label for="sel-era">時代</label>
+        <select id="sel-era"></select>
       </div>
       <div class="field">
         <label for="inp-cap">技能上限</label>
@@ -252,7 +252,7 @@ const FF_T=['ハナ','キク','トメ','ウメ','文子','貞子','君子','静�
 // 時代設定（名前の傾向と、その時代に存在しない技能）
 const ERAS={
   '現代':{ln:LN,fm:FM,ff:FF,order:'jp',drop:[]},
-  '1920年代（大正〜昭和）':{ln:LN,fm:FM_T,ff:FF_T,order:'jp',drop:['コンピューター','電子工学']},
+  '1920年代':{ln:LN,fm:FM_T,ff:FF_T,order:'jp',drop:['コンピューター','電子工学']},
 };
 
 const BASE={

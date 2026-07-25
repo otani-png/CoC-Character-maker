@@ -88,10 +88,10 @@ mockValues['inp-cap'] = '';
 
 // --- 2c. 時代（era） ---
 check('ERAS: 現代あり', '現代' in t.ERAS);
-check('ERAS: 1920年代あり', '1920年代（大正〜昭和）' in t.ERAS);
+check('ERAS: 1920年代あり', '1920年代' in t.ERAS);
 check('ERAS: 現代は技能を落とさない', t.ERAS['現代'].drop.length === 0);
 for (let i = 0; i < 300; i++) {
-  mockValues['sel-era'] = '1920年代（大正〜昭和）';
+  mockValues['sel-era'] = '1920年代';
   mockValues['sel-job'] = 'random';
   const c = t.generate();
   check('1920年代: コンピューター無し', !('コンピューター' in c.skills));
