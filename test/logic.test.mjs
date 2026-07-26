@@ -9,7 +9,8 @@ const m = html.match(/<script>([\s\S]*)<\/script>/);
 if (!m) { console.error('script tag not found'); process.exit(1); }
 
 // --- DOMモック ---
-const mockValues = { 'sel-sex': 'random', 'sel-job': 'random', 'inp-age': '', 'sel-era': '現代', 'inp-cap': '' };
+const mockValues = { 'sel-sex': 'random', 'sel-job': 'random', 'inp-age': '', 'sel-era': '現代', 'inp-cap': '', 'inp-rectarget': '' };
+let mockRecommended = []; // 「チェック済みの推奨技能」を差し替えてテストする
 const stubEl = id => ({
   value: mockValues[id] ?? '',
   style: {}, textContent: '', innerHTML: '',
@@ -19,6 +20,7 @@ const stubEl = id => ({
 globalThis.document = {
   getElementById: id => stubEl(id),
   createElement: () => stubEl(''),
+  querySelectorAll: sel => sel.includes('checkbox') ? mockRecommended.map(s => ({ dataset: { skill: s } })) : [],
   addEventListener() {},
   body: { appendChild() {}, removeChild() {} },
 };
@@ -99,6 +101,39 @@ for (let i = 0; i < 300; i++) {
   check('1920年代: 出力にコンピューター混入なし', !t.toCoco(c).includes('コンピューター') && !t.toText(c).includes('コンピューター'));
   check('1920年代: 母国語は残る', '母国語' in c.skills);
 }
+mockValues['sel-era'] = '現代';
+
+// --- 2c2. 推奨技能：目標値まで必ず確保され、上限も超えない ---
+for (const target of ['50', '75']) {
+  for (const cap of ['80', '99']) {
+    for (let i = 0; i < 150; i++) {
+      mockValues['inp-rectarget'] = target;
+      mockValues['inp-cap'] = cap;
+      mockValues['sel-job'] = 'random';
+      mockRecommended = ['考古学', 'ライフル', '目星', 'オカルト'];
+      const c = t.generate();
+      const want = Math.min(+target, +cap);
+      for (const r of mockRecommended) {
+        check(`推奨 ${r} >= 目標(${want})`, c.skills[r] >= want);
+        check(`推奨 ${r} <= 上限(${cap})`, c.skills[r] <= +cap);
+      }
+      check('推奨技能がCHARに載る', c.recommended.length === 4 && c.recTarget === Math.min(+target, +cap));
+    }
+  }
+}
+mockRecommended = [];
+mockValues['inp-rectarget'] = '';
+mockValues['inp-cap'] = '';
+
+// --- 2c3. 時代で消えた技能を推奨しても壊れない（無視される） ---
+for (let i = 0; i < 100; i++) {
+  mockValues['sel-era'] = '1920年代';
+  mockRecommended = ['コンピューター', '目星'];
+  const c = t.generate();
+  check('1920年代: 消えた推奨技能は無視', !('コンピューター' in c.skills));
+  check('1920年代: 生きてる推奨技能は確保', c.skills['目星'] >= 60);
+}
+mockRecommended = [];
 mockValues['sel-era'] = '現代';
 
 // --- 2d. 職業ポイントは全職業プラス ---
