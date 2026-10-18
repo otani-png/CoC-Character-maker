@@ -178,6 +178,8 @@ input::placeholder{color:var(--text-faint)}
 .sk-row.primary .sk-val{color:var(--text);font-weight:600}
 
 /* toast */
+.usage{margin-top:22px;padding-top:14px;border-top:1px solid var(--border)}
+.usage-t{font-size:11px;font-weight:600;letter-spacing:.06em;color:var(--text-faint);margin-bottom:4px}
 .foot{max-width:880px;margin:8px auto 40px;padding:0 24px;text-align:center;font-size:11.5px;color:var(--text-faint);letter-spacing:.04em}
 .toast{position:fixed;bottom:26px;right:26px;background:var(--toast-bg);
   border-radius:11px;color:var(--toast-fg);padding:12px 20px;font-size:13px;font-weight:500;opacity:0;transform:translateY(12px);
@@ -282,13 +284,17 @@ input::placeholder{color:var(--text-faint)}
       <button class="btn-sm" id="btn-text">テキストをコピー</button>
       <button class="btn-sm" id="btn-coco">ココフォリアの駒をコピー</button>
     </div>
-    <div class="hint">年齢は「年齢層」の範囲からランダム。直接入れた年齢があればそちらを優先します（EDU が年齢−6 を超えないよう調整）。子供・学生を選ぶと、職業は「学生」になります。「詳細設定」の「方向性」を選ぶと、その役回りに合う職業が出やすくなり、技能にも多めにポイントを振ります。「詳細設定」から、技能値の上限（既定90）と、シナリオの推奨技能を指定できます。推奨技能に選んだものは、目標値（既定60）まで必ず確保します。ココフォリアの駒データは、コピーしてルーム上で Ctrl+V を押すだけで駒になります。</div>
   </div>
 
   <div class="card" id="empty">
     <div class="empty">「探索者を生成する」を押すと、ここにキャラクターシートが出ます。</div>
   </div>
   <div id="sheet" style="display:none"></div>
+
+  <div class="usage">
+    <div class="usage-t">使い方</div>
+    <div class="hint">年齢は「年齢層」の範囲からランダム。直接入れた年齢があればそちらを優先します（EDU が年齢−6 を超えないよう調整）。子供・学生を選ぶと、職業は「学生」になります。「詳細設定」の「方向性」を選ぶと、その役回りに合う職業が出やすくなり、技能にも多めにポイントを振ります。「詳細設定」から、技能値の上限（既定90）と、シナリオの推奨技能を指定できます。推奨技能に選んだものは、目標値（既定60）まで必ず確保します。ココフォリアの駒データは、コピーしてルーム上で Ctrl+V を押すだけで駒になります。</div>
+  </div>
 </div>
 
 <footer class="foot">ぱっきゃら <span id="ver"></span></footer>
@@ -299,7 +305,7 @@ input::placeholder{color:var(--text-faint)}
 // =====================
 // VERSION — 更新したら数字を上げる（小さな直し＝下の桁 +1／機能を足した＝真ん中 +1／大きく作り替えた＝上の桁 +1）
 // =====================
-const VERSION='2.1.0';
+const VERSION='2.1.1';
 const VERSION_DATE='2026-10-18';
 
 // =====================
