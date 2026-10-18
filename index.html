@@ -215,7 +215,8 @@ input::placeholder{color:var(--text-faint)}
   <div class="input-block">
     <span class="lbl">条件</span>
     <div class="fields">
-      <div class="field">
+      <!-- 版の選択は7版を隠しているあいだ画面に出さない（2026-10-18）。中身は6版固定で動く -->
+      <div class="field" style="display:none">
         <label for="sel-edition">版</label>
         <select id="sel-edition">
           <option value="6">6版</option>
@@ -305,7 +306,7 @@ input::placeholder{color:var(--text-faint)}
 // =====================
 // VERSION — 更新したら数字を上げる（小さな直し＝下の桁 +1／機能を足した＝真ん中 +1／大きく作り替えた＝上の桁 +1）
 // =====================
-const VERSION='2.1.2';
+const VERSION='2.1.3';
 const VERSION_DATE='2026-10-18';
 
 // =====================
