@@ -178,6 +178,7 @@ input::placeholder{color:var(--text-faint)}
 .sk-row.primary .sk-val{color:var(--text);font-weight:600}
 
 /* toast */
+.foot{max-width:880px;margin:8px auto 40px;padding:0 24px;text-align:center;font-size:11.5px;color:var(--text-faint);letter-spacing:.04em}
 .toast{position:fixed;bottom:26px;right:26px;background:var(--toast-bg);
   border-radius:11px;color:var(--toast-fg);padding:12px 20px;font-size:13px;font-weight:500;opacity:0;transform:translateY(12px);
   transition:all .28s cubic-bezier(.2,.8,.2,1);pointer-events:none;z-index:99;box-shadow:var(--shadow-lg)}
@@ -290,9 +291,17 @@ input::placeholder{color:var(--text-faint)}
   <div id="sheet" style="display:none"></div>
 </div>
 
+<footer class="foot">ぱっきゃら <span id="ver"></span></footer>
+
 <div class="toast" id="toast"></div>
 
 <script>
+// =====================
+// VERSION — 更新したら数字を上げる（小さな直し＝下の桁 +1／機能を足した＝真ん中 +1／大きく作り替えた＝上の桁 +1）
+// =====================
+const VERSION='2.0.0';
+const VERSION_DATE='2026-10-18';
+
 // =====================
 // DATA
 // =====================
@@ -884,6 +893,9 @@ function toast(msg){
 // INIT
 // =====================
 function init(){
+  const verEl=document.getElementById('ver');
+  if(verEl)verEl.textContent=`v${VERSION}（${VERSION_DATE}）`;
+
   const roleSel=document.getElementById('sel-role');
   ['おまかせ',...Object.keys(ROLES)].forEach(r=>{
     const el=document.createElement('option');
