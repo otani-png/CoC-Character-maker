@@ -102,6 +102,7 @@ input::placeholder{color:var(--text-faint)}
 .reco-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:1px 14px;max-height:250px;overflow:auto;padding:6px 10px;border:1px solid var(--border);border-radius:10px;background:var(--surface)}
 .reco-cat{grid-column:1/-1;font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text-faint);padding:10px 0 4px;border-bottom:1px solid var(--border);margin-bottom:2px}
 .reco-cat:first-child{padding-top:2px}
+.show-grid{display:flex;flex-wrap:wrap;gap:4px 18px;margin-bottom:6px}
 .reco-item{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--text-dim);cursor:pointer;padding:3px 0}
 .reco-item:hover{color:var(--text)}
 .reco-item input{width:14px;height:14px;accent-color:var(--accent);cursor:pointer;flex-shrink:0}
@@ -203,7 +204,7 @@ input::placeholder{color:var(--text-faint)}
   <div class="head-in">
     <div class="eyebrow">CoC 6th Edition · One-Click Character Creator</div>
     <h1>ぱっきゃら<span class="h1-sub">ぱっときゃら工房</span></h1>
-    <div class="head-sub">ボタンを押すだけで、CoCの探索者が1人できます。<br>ココフォリアの駒にもそのまま貼れます。<span class="head-ed">（6版・7版）</span></div>
+    <div class="head-sub">ワンクリックでキャラメイクができちゃいます！<br>ココフォリアにも対応！駒出力してください！<span class="head-ed">（6版・7版）</span></div>
   </div>
 </header>
 
@@ -231,12 +232,18 @@ input::placeholder{color:var(--text-faint)}
         <select id="sel-job"></select>
       </div>
       <div class="field">
-        <label for="inp-age">年齢</label>
-        <input type="number" id="inp-age" min="14" max="80" placeholder="ランダム">
+        <label for="sel-ageband">年齢層</label>
+        <select id="sel-ageband">
+          <option value="random">ランダム</option>
+          <option value="子供">子供（10〜14）</option>
+          <option value="学生">学生（15〜22）</option>
+          <option value="社会人">社会人（22〜51）</option>
+          <option value="老人">老人（60〜80）</option>
+        </select>
       </div>
       <div class="field">
-        <label for="sel-era">時代</label>
-        <select id="sel-era"></select>
+        <label for="inp-age">年齢（直接）</label>
+        <input type="number" id="inp-age" min="10" max="80" placeholder="空欄で年齢層から">
       </div>
     </div>
 
@@ -253,7 +260,15 @@ input::placeholder{color:var(--text-faint)}
           <label for="inp-rectarget">推奨技能の目標値</label>
           <input type="number" id="inp-rectarget" min="1" max="99" value="60">
         </div>
+        <div class="field">
+          <label for="sel-role">方向性</label>
+          <select id="sel-role"></select>
+        </div>
       </div>
+      <div class="reco-head">
+        <span class="reco-title">表示する欄 — チェックを外した欄は、シートにもテキストにも出しません</span>
+      </div>
+      <div class="show-grid" id="show-grid"></div>
       <div class="reco-head">
         <span class="reco-title">推奨技能 — シナリオが推奨する技能を選ぶと、目標値まで必ず確保します</span>
         <button type="button" class="btn-link" id="btn-rec-clear">選択をクリア</button>
@@ -266,7 +281,7 @@ input::placeholder{color:var(--text-faint)}
       <button class="btn-sm" id="btn-text">テキストをコピー</button>
       <button class="btn-sm" id="btn-coco">ココフォリアの駒をコピー</button>
     </div>
-    <div class="hint">年齢は空欄でランダム（6版は最低年齢 EDU+6）。版を7版にすると、能力値は×5の値で出て、技能上限の既定は75になります。「詳細設定」から、技能値の上限（既定90）と、シナリオの推奨技能を指定できます。推奨技能に選んだものは、目標値（既定60）まで必ず確保します。ココフォリアの駒データは、コピーしてルーム上で Ctrl+V を押すだけで駒になります。</div>
+    <div class="hint">年齢は「年齢層」の範囲からランダム。直接入れた年齢があればそちらを優先します（6版は EDU が年齢−6 を超えないよう調整）。「詳細設定」の「方向性」を選ぶと、その役回りの技能に多めにポイントを振ります。版を7版にすると、能力値は×5の値で出て、技能上限の既定は75になります。「詳細設定」から、技能値の上限（既定90）と、シナリオの推奨技能を指定できます。推奨技能に選んだものは、目標値（既定60）まで必ず確保します。ココフォリアの駒データは、コピーしてルーム上で Ctrl+V を押すだけで駒になります。</div>
   </div>
 
   <div class="card" id="empty">
@@ -317,6 +332,25 @@ const CATS=[
 ];
 
 // 職業技能ポイントは職業ごとに算出（体力系は STR/DEX、社交系は APP を混ぜる。純6版に戻すなら全て s=>s.EDU*20）
+// 年齢層（ランダムの振れ幅）
+const AGE_BANDS={
+  '子供':[10,14],'学生':[15,22],'社会人':[22,51],'老人':[60,80],
+};
+
+// 方向性（ドラクエの役割のように、どの技能を伸ばすか）
+const ROLES={
+  'アタッカー':['こぶし','キック','組み付き','刃物','拳銃','ライフル','ショットガン','回避','投擲'],
+  '探索役':['目星','聞き耳','図書館','忍び歩き','隠れる','追跡','写真術','ナビゲート'],
+  '交渉役':['言いくるめ','説得','信用','心理学','値切り'],
+  '知識役':['図書館','オカルト','歴史','考古学','医学','生物学','化学','天文学'],
+  '回復役':['応急手当','医学','薬学','心理学','生物学'],
+};
+
+// シートに出す欄（チェックを外すと出さない）
+const SHOW_ITEMS=[
+  ['stats','能力値'],['occ','職業技能'],['story','背景設定'],['all','全技能'],
+];
+
 const OCC=[
   {name:'探偵',   pts:s=>s.EDU*20, cr:[20,45], skills:['図書館','言いくるめ','目星','心理学','法律','追跡','隠れる','聞き耳']},
   {name:'医師',   pts:s=>s.EDU*20, cr:[30,70], skills:['医学','生物学','薬学','応急手当','心理学','言いくるめ','信用','図書館']},
@@ -427,11 +461,12 @@ function db(str,siz){
 }
 
 // namesに totalポイントを重み付け配分。各技能は cap を超えない
-function distrib(names,total,cur,cap){
+function distrib(names,total,cur,cap,favor=[]){
   cap=cap??90;
   const r={};names.forEach(n=>r[n]=cur[n]??BASE[n]??1);
   if(!names.length||total<=0)return r;
-  const w=names.map(()=>Math.random()*.8+.2);
+  // favor（方向性の技能）は重みを底上げして、多めにポイントが入るようにする
+  const w=names.map(n=>Math.random()*.8+(favor.includes(n)?1.2:.2));
   const ws=w.reduce((a,b)=>a+b,0);
   const al=w.map(x=>Math.round(total*x/ws));
   const as=al.reduce((a,b)=>a+b,0);
@@ -499,10 +534,18 @@ let CHAR=null;
 
 function generate(){
   const edition=document.getElementById('sel-edition').value;
-  const eraV=document.getElementById('sel-era').value;
+  const eraV='現代';   // 時代の選択は2026-10-18に一旦外した（細かい反映にはルルブが要るため）。ERASは残してある
   const sexV=document.getElementById('sel-sex').value;
   const jobV=document.getElementById('sel-job').value;
   const ageV=document.getElementById('inp-age').value;
+  const bandEl=document.getElementById('sel-ageband');
+  const band=bandEl&&bandEl.value||'random';
+  const roleEl=document.getElementById('sel-role');
+  const role=roleEl&&roleEl.value||'おまかせ';
+  const favor=ROLES[role]||[];
+  const show=Object.fromEntries(SHOW_ITEMS.map(([k])=>[k,true]));
+  const showEls=document.querySelectorAll?document.querySelectorAll('#show-grid input[data-show]'):[];
+  [...showEls].forEach(el=>show[el.dataset.show]=el.checked);
   const capV=document.getElementById('inp-cap').value;
 
   const era=ERAS[eraV]||ERAS['現代'];
@@ -519,8 +562,10 @@ function generate(){
   const sn=pick(era.ln);
   const name=era.order==='en'?gn+' '+sn:sn+' '+gn;
 
-  const ctx={sex,name,ageV,jobV,era,eraV:eraV||'現代',cap,recommended,recTarget};
+  const ctx={sex,name,ageV,band,jobV,era,eraV,cap,recommended,recTarget,favor};
   CHAR=edition==='7'?generate7(ctx):generate6(ctx);
+  CHAR.role=favor.length?role:'';
+  CHAR.show=show;
   CHAR.story=makeStory(CHAR);
   return CHAR;
 }
@@ -534,24 +579,35 @@ function finishSkills(sk,cap,recommended,recTarget,exempt=['信用']){
 }
 
 // 推奨技能のうち職業技能でないものは、趣味ポイントの配分先に必ず含める
-function pickHobby(sk,occ,recommended){
-  const recNonOcc=recommended.filter(k=>k in sk&&!occ.skills.includes(k)&&k!=='母国語'&&k!=='信用');
+// 方向性の技能も、職業技能でなければ趣味ポイントの配分先に入れる
+function pickHobby(sk,occ,recommended,favor=[]){
+  const ok=k=>k in sk&&!occ.skills.includes(k)&&k!=='母国語'&&k!=='信用';
+  const recNonOcc=recommended.filter(ok);
+  const favNonOcc=favor.filter(ok).sort(()=>Math.random()-.5).slice(0,4);
   const hobbyPool=Object.keys(sk).filter(k=>!occ.skills.includes(k)&&k!=='クトゥルフ神話'&&k!=='母国語'&&k!=='信用');
   const hobbyPick=[...hobbyPool].sort(()=>Math.random()-.5).slice(0,6);
-  return [...new Set([...recNonOcc,...hobbyPick])];
+  return [...new Set([...recNonOcc,...favNonOcc,...hobbyPick])];
+}
+
+// 年齢を決める：直接入力 ＞ 年齢層 ＞ 既定の範囲
+function rollAge(ageV,band,lo=18,hi=65){
+  if(ageV)return clamp(parseInt(ageV),10,80);
+  const r=AGE_BANDS[band]||[lo,hi];
+  return Math.floor(Math.random()*(r[1]-r[0]+1))+r[0];
 }
 
 // ── 6版 ──
-function generate6({sex,name,ageV,jobV,era,eraV,cap,recommended,recTarget}){
+function generate6({sex,name,ageV,band,jobV,era,eraV,cap,recommended,recTarget,favor}){
   const stats={STR:r3d6(),CON:r3d6(),POW:r3d6(),DEX:r3d6(),APP:r3d6(),SIZ:r2d6p6(),INT:r2d6p6(),EDU:r3d6p3()};
 
   // 6版ルール：探索者の最低年齢 = EDU + 6
   let age;
-  if(ageV){
-    age=clamp(parseInt(ageV),14,80);
-    stats.EDU=Math.min(stats.EDU,age-6);
+  if(ageV||AGE_BANDS[band]){
+    // 年齢が決まっているときは、EDU のほうを年齢に合わせて下げる
+    age=rollAge(ageV,band);
+    stats.EDU=Math.max(1,Math.min(stats.EDU,age-6));
   }else{
-    age=Math.max(stats.EDU+6,Math.floor(Math.random()*48)+18);
+    age=Math.max(stats.EDU+6,rollAge('', 'random'));
   }
   const {STR,CON,POW,DEX,APP,SIZ,INT,EDU}=stats;
 
@@ -567,10 +623,10 @@ function generate6({sex,name,ageV,jobV,era,eraV,cap,recommended,recTarget}){
   sk['母国語']=EDU*5;
 
   const occPts=occ.pts(stats);
-  Object.assign(sk,distrib(occ.skills.filter(k=>k in sk),occPts,sk,cap));
+  Object.assign(sk,distrib(occ.skills.filter(k=>k in sk),occPts,sk,cap,favor));
   sk['信用']=Math.min(Math.floor(Math.random()*(occ.cr[1]-occ.cr[0])+occ.cr[0]),99);
 
-  Object.assign(sk,distrib(pickHobby(sk,occ,recommended),INT*10,sk,cap));
+  Object.assign(sk,distrib(pickHobby(sk,occ,recommended,favor),INT*10,sk,cap,favor));
   finishSkills(sk,cap,recommended,recTarget);
 
   return {edition:'6',name,sex,age,era:eraV,cap,recommended,recTarget,occupation:occ.name,primarySkills:occ.skills,
@@ -579,14 +635,14 @@ function generate6({sex,name,ageV,jobV,era,eraV,cap,recommended,recTarget}){
 }
 
 // ── 7版 ──（能力値は×5スケール。詳細な根拠は NOTES_7版対応.md）
-function generate7({sex,name,ageV,jobV,era,eraV,cap,recommended,recTarget}){
+function generate7({sex,name,ageV,band,jobV,era,eraV,cap,recommended,recTarget,favor}){
   const stats={
     STR:r3d6()*5, CON:r3d6()*5, POW:r3d6()*5, DEX:r3d6()*5, APP:r3d6()*5,
     SIZ:r2d6p6()*5, INT:r2d6p6()*5, EDU:r2d6p6()*5,
   };
   const {STR,CON,POW,DEX,APP,SIZ,INT,EDU}=stats;
   // 7版は6版の「EDU+6」の年齢制限が無い（年齢補正は未実装＝NOTES参照）
-  const age=ageV?clamp(parseInt(ageV),14,80):Math.floor(Math.random()*48)+18;
+  const age=rollAge(ageV,band);
 
   const HP=Math.floor((CON+SIZ)/10);
   const MP=Math.floor(POW/5);
@@ -604,11 +660,11 @@ function generate7({sex,name,ageV,jobV,era,eraV,cap,recommended,recTarget}){
   sk['母国語']=EDU;                    // 7版 母国語＝EDU
 
   const occPts=EDU*4;                  // 簡易：7版職業ポイント＝EDU×4（本来は職業ごとに異なる）
-  Object.assign(sk,distrib(occ.skills.filter(k=>k in sk),occPts,sk,cap));
+  Object.assign(sk,distrib(occ.skills.filter(k=>k in sk),occPts,sk,cap,favor));
   sk['信用']=Math.floor(Math.random()*(occ.cr[1]-occ.cr[0])+occ.cr[0]);
 
   const hobbyPts=INT*2;                // 7版 趣味/興味技能＝INT×2
-  Object.assign(sk,distrib(pickHobby(sk,occ,recommended),hobbyPts,sk,cap));
+  Object.assign(sk,distrib(pickHobby(sk,occ,recommended,favor),hobbyPts,sk,cap,favor));
   finishSkills(sk,cap,recommended,recTarget,['信用','母国語']);
 
   return {edition:'7',name,sex,age,era:eraV,cap,recommended,recTarget,occupation:occ.name,primarySkills:occ.skills,
@@ -623,6 +679,8 @@ function render(c){
   const {stats:s,derived:d,skills:sk,primarySkills:ps}=c;
   const reco=c.recommended||[];
   const e7=c.edition==='7';
+  const show=c.show||{};
+  const on=k=>show[k]!==false;
   const sh=document.getElementById('sheet');
 
   const dBox=(cls,label,val)=>`<div class="d-box ${cls}"><div class="dl">${label}</div><div class="dv">${val}</div></div>`;
@@ -655,7 +713,7 @@ function render(c){
     <div class="char-meta">
       <span class="pill">${c.sex}</span>
       <span class="pill">${c.age}歳</span>
-      <span class="pill">${c.era}</span>
+      ${c.role?`<span class="pill">${c.role}</span>`:''}
       <span class="pill occ">${c.occupation}</span>
     </div>
     <div class="derived-row">
@@ -671,7 +729,7 @@ function render(c){
 </div>
 
 <div class="grid2">
-  <div class="card">
+  ${on('stats')?`<div class="card">
     <div class="card-t">能力値<span class="sub">${e7?'下段は ½（ハード）と ⅕（イクストリーム）':'下段は ×5 の値'}</span></div>
     <div class="card-body">
       <div class="stat-grid">
@@ -679,27 +737,27 @@ function render(c){
       </div>
       <div class="db-row"><span>ダメージボーナス</span><span class="db-val">${d.DB}</span></div>
     </div>
-  </div>
+  </div>`:''}
 
-  <div class="card">
+  ${on('occ')?`<div class="card">
     <div class="card-t">職業技能<span class="sub">職業P ${c.occPts} / 趣味P ${c.hobbyPts}</span></div>
     <div class="card-body">
       <div class="skills one">
         ${ps.filter(k=>k in sk).map(k=>skRow(k,sk[k])).join('')}
       </div>
     </div>
-  </div>
+  </div>`:''}
 </div>
 
-<div class="card">
+${on('story')?`<div class="card">
   <div class="card-t">背景設定<span class="sub">自動生成</span></div>
   <div class="card-body"><p class="story">${c.story}</p></div>
-</div>
+</div>`:''}
 
-<div class="card">
+${on('all')?`<div class="card">
   <div class="card-t">全技能<span class="sub">濃い行が職業技能 · 上限 ${c.cap}${reco.length?` · 推奨${reco.length}件（目標${c.recTarget}）`:''}</span></div>
   <div class="card-body"><div class="skills">${allSkRows}</div></div>
-</div>
+</div>`:''}
 `;
 
   const eyebrow=document.querySelector&&document.querySelector('.eyebrow');
@@ -715,28 +773,27 @@ function toText(c){
   const {stats:s,derived:d,skills:sk,primarySkills:ps}=c;
   const e7=c.edition==='7';
   const baseOf=e7?base7:(k=>BASE[k]??0);
+  const on=k=>!(c.show&&c.show[k]===false);
   const derivedLine=e7
     ? `HP:${d.HP}  MP:${d.MP}  SAN:${d.SAN}  幸運:${d.Luck}  移動:${d.MOV}  ビルド:${d.Build>=0?'+':''}${d.Build}  DB:${d.DB}`
     : `HP:${d.HP}  MP:${d.MP}  SAN:${d.SAN}  幸運:${d.Luck}  アイデア:${d.Idea}  知識:${d.Know}\nDB:${d.DB}`;
   return[
     `=== クトゥルフ神話TRPG ${e7?'7版':'6版'} キャラクターシート ===`,
     `名前: ${c.name}　性別: ${c.sex}　年齢: ${c.age}歳　職業: ${c.occupation}`,
-    `時代: ${c.era}　技能上限: ${c.cap}`,
+    `技能上限: ${c.cap}${c.role?`　方向性: ${c.role}`:''}`,
     ...(c.recommended&&c.recommended.length?[`推奨技能（目標${c.recTarget}）: ${c.recommended.join('、')}`]:[]),
     '',
-    `STR:${s.STR}  CON:${s.CON}  POW:${s.POW}  DEX:${s.DEX}`,
-    `APP:${s.APP}  SIZ:${s.SIZ}  INT:${s.INT}  EDU:${s.EDU}`,
+    ...(on('stats')?[`STR:${s.STR}  CON:${s.CON}  POW:${s.POW}  DEX:${s.DEX}`,
+      `APP:${s.APP}  SIZ:${s.SIZ}  INT:${s.INT}  EDU:${s.EDU}`]:[]),
     derivedLine,
     '',
-    '--- 技能（＊職業技能）---',
-    ...CATS.map(cat=>{
-      const rows=cat.keys.filter(k=>k in sk&&(sk[k]>baseOf(k)+5||ps.includes(k)));
+    ...(on('all')||on('occ')?['--- 技能（＊職業技能）---']:[]),
+    ...(on('all')||on('occ')?CATS:[]).map(cat=>{
+      const rows=cat.keys.filter(k=>k in sk&&(on('all')?(sk[k]>baseOf(k)+5||ps.includes(k)):ps.includes(k)));
       if(!rows.length)return null;
       return[`[${cat.label}]`,...rows.map(k=>`  ${ps.includes(k)?'＊':'　'}${k}: ${sk[k]}`)].join('\n');
     }).filter(Boolean),
-    '',
-    '--- 背景設定 ---',
-    c.story,
+    ...(on('story')?['','--- 背景設定 ---',c.story]:[]),
   ].join('\n');
 }
 
@@ -827,10 +884,29 @@ function toast(msg){
 // INIT
 // =====================
 function init(){
-  const eraSel=document.getElementById('sel-era');
-  Object.keys(ERAS).forEach(e=>{
+  const roleSel=document.getElementById('sel-role');
+  ['おまかせ',...Object.keys(ROLES)].forEach(r=>{
     const el=document.createElement('option');
-    el.value=e;el.textContent=e;eraSel.appendChild(el);
+    el.value=r;el.textContent=r;roleSel.appendChild(el);
+  });
+
+  // 表示する欄（前回の選択をこのブラウザに覚えておく）
+  let saved={};
+  try{saved=JSON.parse(localStorage.getItem('pakkyara-show')||'{}');}catch(e){}
+  const showGrid=document.getElementById('show-grid');
+  SHOW_ITEMS.forEach(([k,label])=>{
+    const item=document.createElement('label');
+    item.className='reco-item';
+    const cb=document.createElement('input');
+    cb.type='checkbox';cb.dataset.show=k;cb.checked=saved[k]!==false;
+    cb.addEventListener('change',()=>{
+      saved[k]=cb.checked;
+      try{localStorage.setItem('pakkyara-show',JSON.stringify(saved));}catch(e){}
+      if(CHAR){CHAR.show={...CHAR.show,[k]:cb.checked};render(CHAR);}
+    });
+    item.appendChild(cb);
+    item.appendChild(document.createTextNode(label));
+    showGrid.appendChild(item);
   });
 
   const sel=document.getElementById('sel-job');

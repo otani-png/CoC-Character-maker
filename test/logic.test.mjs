@@ -88,20 +88,52 @@ for (const cap of ['70', '80', '99']) {
 }
 mockValues['inp-cap'] = '';
 
-// --- 2c. 時代（era） ---
-check('ERAS: 現代あり', '現代' in t.ERAS);
-check('ERAS: 1920年代あり', '1920年代' in t.ERAS);
-check('ERAS: 現代は技能を落とさない', t.ERAS['現代'].drop.length === 0);
-for (let i = 0; i < 300; i++) {
-  mockValues['sel-era'] = '1920年代';
-  mockValues['sel-job'] = 'random';
+// --- 2c. 時代は「現代」で固定（2026-10-18に選択欄を外した）・年齢層・方向性・表示欄 ---
+check('ERAS: 現代あり（データは残す）', '現代' in t.ERAS);
+for (let i = 0; i < 100; i++) {
   const c = t.generate();
-  check('1920年代: コンピューター無し', !('コンピューター' in c.skills));
-  check('1920年代: 電子工学無し', !('電子工学' in c.skills));
-  check('1920年代: 出力にコンピューター混入なし', !t.toCoco(c).includes('コンピューター') && !t.toText(c).includes('コンピューター'));
-  check('1920年代: 母国語は残る', '母国語' in c.skills);
+  check('時代は現代＝コンピューターがある', 'コンピューター' in c.skills);
 }
-mockValues['sel-era'] = '現代';
+const BANDS = { '子供': [10, 14], '学生': [15, 22], '社会人': [22, 51], '老人': [60, 80] };
+for (const ed of ['6', '7']) {
+  mockValues['sel-edition'] = ed;
+  for (const [band, [lo, hi]] of Object.entries(BANDS)) {
+    mockValues['sel-ageband'] = band;
+    for (let i = 0; i < 200; i++) {
+      const c = t.generate();
+      check(`${ed}版 年齢層 ${band}: ${lo}〜${hi}`, c.age >= lo && c.age <= hi);
+      if (ed === '6') check(`6版 年齢層 ${band}: EDU <= 年齢-6`, c.stats.EDU <= Math.max(1, c.age - 6));
+    }
+  }
+  mockValues['inp-age'] = '30';
+  mockValues['sel-ageband'] = '子供';
+  check(`${ed}版 直接入力が年齢層より優先`, t.generate().age === 30);
+  mockValues['inp-age'] = '';
+}
+mockValues['sel-ageband'] = '';
+mockValues['sel-edition'] = '6';
+// 方向性：その役回りの技能の平均が、おまかせより高くなる
+const avgOf = (role, keys, n = 400) => {
+  mockValues['sel-role'] = role;
+  let sum = 0;
+  for (let i = 0; i < n; i++) { const c = t.generate(); sum += keys.reduce((a, k) => a + c.skills[k], 0) / keys.length; }
+  return sum / n;
+};
+const ATK = ['こぶし', 'キック', '組み付き', '刃物', '拳銃', 'ライフル', 'ショットガン', '回避', '投擲'];
+const EXP = ['目星', '聞き耳', '図書館', '忍び歩き', '隠れる', '追跡', '写真術', 'ナビゲート'];
+check('方向性 アタッカー：戦闘技能が伸びる', avgOf('アタッカー', ATK) > avgOf('おまかせ', ATK) + 3);
+check('方向性 探索役：探索技能が伸びる', avgOf('探索役', EXP) > avgOf('おまかせ', EXP) + 3);
+mockValues['sel-role'] = 'アタッカー';
+check('方向性がCHARに載る', t.generate().role === 'アタッカー');
+mockValues['sel-role'] = '';
+check('おまかせなら方向性は空', t.generate().role === '');
+// 表示欄：背景を外したらテキストにも出ない
+{
+  const c = t.generate();
+  check('既定は背景あり', t.toText(c).includes(c.story));
+  c.show = { ...c.show, story: false };
+  check('背景を外すとテキストに出ない', !t.toText(c).includes(c.story) && !t.toText(c).includes('--- 背景設定 ---'));
+}
 
 // --- 2c2. 推奨技能：目標値まで必ず確保され、上限も超えない ---
 for (const target of ['50', '75']) {
@@ -125,16 +157,6 @@ mockRecommended = [];
 mockValues['inp-rectarget'] = '';
 mockValues['inp-cap'] = '';
 
-// --- 2c3. 時代で消えた技能を推奨しても壊れない（無視される） ---
-for (let i = 0; i < 100; i++) {
-  mockValues['sel-era'] = '1920年代';
-  mockRecommended = ['コンピューター', '目星'];
-  const c = t.generate();
-  check('1920年代: 消えた推奨技能は無視', !('コンピューター' in c.skills));
-  check('1920年代: 生きてる推奨技能は確保', c.skills['目星'] >= 60);
-}
-mockRecommended = [];
-mockValues['sel-era'] = '現代';
 
 // --- 2d. 職業ポイントは全職業プラス ---
 for (const o of t.OCC) {
@@ -216,14 +238,12 @@ for (let i = 0; i < 1000; i++) {
     if (k !== '信用' && k !== '母国語') check(`7e: ${k} <= 75`, v <= 75);
   }
 }
-// 7版：推奨技能と時代
+// 7版：推奨技能
 mockRecommended = ['目星', 'オカルト'];
-mockValues['sel-era'] = '1920年代';
 for (let i = 0; i < 200; i++) {
   const c = t.generate();
   check('7e reco: 目星 >= 60', c.skills['目星'] >= 60);
   check('7e reco: オカルト >= 60', c.skills['オカルト'] >= 60);
-  check('7e era: コンピューターが無い', !('コンピューター' in c.skills));
   const json = JSON.parse(t.toCoco(c));
   check('7e coco: no ×5 on stats', !json.data.commands.includes('{STR}*5'));
   check('7e coco: no アイデア', !json.data.commands.includes('【アイデア】'));
@@ -234,7 +254,6 @@ for (let i = 0; i < 200; i++) {
   check('7e text: no undefined/NaN', !/undefined|NaN/.test(txt));
 }
 mockRecommended = [];
-mockValues['sel-era'] = '現代';
 mockValues['sel-edition'] = '6';
 check('6e after 7e: edition back', t.generate().edition === '6');
 
