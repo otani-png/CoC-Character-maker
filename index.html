@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>キャラシメーカー — クトゥルフ神話TRPG（CoC6版）</title>
-<meta name="description" content="ボタンひとつでクトゥルフ神話TRPG6版の探索者を生成するツール。能力値・職業技能・背景設定に加えて、ココフォリアの駒データも出力できる。技能値上限と時代の指定に対応。">
+<title>ぱっきゃら — ワンクリックでCoC探索者（6版・7版）｜ぱっときゃら工房</title>
+<meta name="description" content="ぱっきゃら（ぱっときゃら工房）：ボタンひとつでクトゥルフ神話TRPG（6版・7版）の探索者を生成するツール。能力値・職業技能・背景設定に加えて、ココフォリアの駒データも出力できる。技能値上限と時代の指定に対応。">
 <meta name="color-scheme" content="light">
 <meta property="og:type" content="website">
-<meta property="og:title" content="キャラシメーカー — クトゥルフ神話TRPG（CoC6版）">
-<meta property="og:description" content="ボタンひとつでCoC6版の探索者を1人ぶん生成。背景設定つき、ココフォリアの駒データもそのまま貼れる。">
+<meta property="og:title" content="ぱっきゃら — ワンクリックでCoC探索者（6版・7版）">
+<meta property="og:description" content="ボタンひとつでCoC（6版・7版）の探索者を1人ぶん生成。背景設定つき、ココフォリアの駒データもそのまま貼れる。">
 <meta name="twitter:card" content="summary">
 <style>
 :root{
@@ -40,6 +40,7 @@ body{
 .head{padding:40px 24px 8px}
 .head-in{max-width:880px;margin:0 auto}
 .eyebrow{font-size:11px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--text-dim);margin-bottom:10px}
+.head h1 .h1-sub{font-size:13px;font-weight:500;color:var(--text-faint);margin-left:10px;letter-spacing:.04em}
 .head h1{font-size:27px;font-weight:700;letter-spacing:-.02em;color:var(--text);line-height:1.2}
 .head-sub{font-size:14px;color:var(--text-dim);margin-top:8px;max-width:620px}
 .wrap{max-width:880px;margin:0 auto;padding:24px}
@@ -199,8 +200,8 @@ input::placeholder{color:var(--text-faint)}
 
 <header class="head">
   <div class="head-in">
-    <div class="eyebrow">CoC 6th Edition · Character Creator</div>
-    <h1>キャラシメーカー</h1>
+    <div class="eyebrow">CoC 6th Edition · One-Click Character Creator</div>
+    <h1>ぱっきゃら<span class="h1-sub">ぱっときゃら工房</span></h1>
     <div class="head-sub">ボタンひとつで、クトゥルフ神話TRPGの探索者を1人ぶん作ります（6版・7版）。能力値・職業技能・背景設定に加えて、ココフォリアの駒データもそのまま持ち出せます。</div>
   </div>
 </header>
@@ -701,7 +702,7 @@ function render(c){
 `;
 
   const eyebrow=document.querySelector&&document.querySelector('.eyebrow');
-  if(eyebrow)eyebrow.textContent=`CoC ${e7?'7th':'6th'} Edition · Character Creator`;
+  if(eyebrow)eyebrow.textContent=`CoC ${e7?'7th':'6th'} Edition · One-Click Character Creator`;
   document.getElementById('empty').style.display='none';
   sh.style.display='block';
 }
