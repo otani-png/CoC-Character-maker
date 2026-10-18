@@ -125,6 +125,27 @@ check('方向性 アタッカー：戦闘技能が伸びる', avgOf('アタッ�
 check('方向性 探索役：探索技能が伸びる', avgOf('探索役', EXP) > avgOf('おまかせ', EXP) + 3);
 mockValues['sel-role'] = 'アタッカー';
 check('方向性がCHARに載る', t.generate().role === 'アタッカー');
+// 方向性に合う職業が出やすい（アタッカー → 軍人・警察官・冒険家・船員・刑事のどれかが半分以上）
+{
+  let hit = 0; const N = 600;
+  for (let i = 0; i < N; i++) if (['軍人', '警察官', '冒険家', '船員', '刑事'].includes(t.generate().occupation)) hit++;
+  check('方向性アタッカー：戦闘向きの職業が半分以上', hit / N > 0.5);
+}
+// 子供・学生は職業「学生」、大人のランダムでは「学生」は出ない
+for (const band of ['子供', '学生']) {
+  mockValues['sel-ageband'] = band; mockValues['sel-role'] = '';
+  for (let i = 0; i < 200; i++) {
+    const c = t.generate();
+    check(`${band}：職業は学生`, c.occupation === '学生');
+    check(`${band}：大人の経緯が出ない`, !c.story.includes('家業を継がなかった'));
+  }
+}
+for (const band of ['社会人', 'シニア', '']) {
+  mockValues['sel-ageband'] = band;
+  for (let i = 0; i < 200; i++) check(`${band || 'ランダム'}：学生は出ない`, t.generate().occupation !== '学生');
+}
+mockValues['sel-ageband'] = '';
+mockValues['sel-role'] = 'アタッカー';
 mockValues['sel-role'] = '';
 check('おまかせなら方向性は空', t.generate().role === '');
 // 表示欄：背景を外したらテキストにも出ない

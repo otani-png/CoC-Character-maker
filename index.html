@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ぱっきゃら — ワンクリックでCoC探索者（6版・7版）｜ぱっときゃら工房</title>
-<meta name="description" content="ぱっきゃら（ぱっときゃら工房）：ボタンひとつでクトゥルフ神話TRPG（6版・7版）の探索者を生成するツール。能力値・職業技能・背景設定に加えて、ココフォリアの駒データも出力できる。技能値上限と時代の指定に対応。">
+<title>ぱっきゃら — ワンクリックでCoC探索者（6版）｜ぱっときゃら工房</title>
+<meta name="description" content="ぱっきゃら（ぱっときゃら工房）：ボタンひとつでクトゥルフ神話TRPG（6版）の探索者を生成するツール。能力値・職業技能・背景設定に加えて、ココフォリアの駒データも出力できる。技能値上限と時代の指定に対応。">
 <meta name="color-scheme" content="light">
 <meta property="og:type" content="website">
-<meta property="og:title" content="ぱっきゃら — ワンクリックでCoC探索者（6版・7版）">
-<meta property="og:description" content="ボタンひとつでCoC（6版・7版）の探索者を1人ぶん生成。背景設定つき、ココフォリアの駒データもそのまま貼れる。">
+<meta property="og:title" content="ぱっきゃら — ワンクリックでCoC探索者（6版）">
+<meta property="og:description" content="ボタンひとつでCoC（6版）の探索者を1人ぶん生成。背景設定つき、ココフォリアの駒データもそのまま貼れる。">
 <meta name="twitter:card" content="summary">
 <style>
 :root{
@@ -205,7 +205,7 @@ input::placeholder{color:var(--text-faint)}
   <div class="head-in">
     <div class="eyebrow">CoC 6th Edition · One-Click Character Creator</div>
     <h1>ぱっきゃら<span class="h1-sub">ぱっときゃら工房</span></h1>
-    <div class="head-sub">ワンクリックでキャラメイクができちゃいます！<br>ココフォリアにも対応！駒出力してください！<span class="head-ed">（6版・7版）</span></div>
+    <div class="head-sub">ワンクリックでキャラメイクができちゃいます！<br>ココフォリアにも対応！駒出力してください！<span class="head-ed">（6版）</span></div>
   </div>
 </header>
 
@@ -217,7 +217,7 @@ input::placeholder{color:var(--text-faint)}
         <label for="sel-edition">版</label>
         <select id="sel-edition">
           <option value="6">6版</option>
-          <option value="7">7版</option>
+          <!-- 7版は簡易版のため一旦隠す（2026-10-18）。戻すときはこの行を有効に：<option value="7">7版</option> -->
         </select>
       </div>
       <div class="field">
@@ -282,7 +282,7 @@ input::placeholder{color:var(--text-faint)}
       <button class="btn-sm" id="btn-text">テキストをコピー</button>
       <button class="btn-sm" id="btn-coco">ココフォリアの駒をコピー</button>
     </div>
-    <div class="hint">年齢は「年齢層」の範囲からランダム。直接入れた年齢があればそちらを優先します（6版は EDU が年齢−6 を超えないよう調整）。「詳細設定」の「方向性」を選ぶと、その役回りの技能に多めにポイントを振ります。版を7版にすると、能力値は×5の値で出て、技能上限の既定は75になります。「詳細設定」から、技能値の上限（既定90）と、シナリオの推奨技能を指定できます。推奨技能に選んだものは、目標値（既定60）まで必ず確保します。ココフォリアの駒データは、コピーしてルーム上で Ctrl+V を押すだけで駒になります。</div>
+    <div class="hint">年齢は「年齢層」の範囲からランダム。直接入れた年齢があればそちらを優先します（EDU が年齢−6 を超えないよう調整）。子供・学生を選ぶと、職業は「学生」になります。「詳細設定」の「方向性」を選ぶと、その役回りに合う職業が出やすくなり、技能にも多めにポイントを振ります。「詳細設定」から、技能値の上限（既定90）と、シナリオの推奨技能を指定できます。推奨技能に選んだものは、目標値（既定60）まで必ず確保します。ココフォリアの駒データは、コピーしてルーム上で Ctrl+V を押すだけで駒になります。</div>
   </div>
 
   <div class="card" id="empty">
@@ -299,7 +299,7 @@ input::placeholder{color:var(--text-faint)}
 // =====================
 // VERSION — 更新したら数字を上げる（小さな直し＝下の桁 +1／機能を足した＝真ん中 +1／大きく作り替えた＝上の桁 +1）
 // =====================
-const VERSION='2.0.0';
+const VERSION='2.1.0';
 const VERSION_DATE='2026-10-18';
 
 // =====================
@@ -378,6 +378,8 @@ const OCC=[
   {name:'占い師', pts:s=>s.EDU*20, cr:[10,40], skills:['オカルト','心理学','言いくるめ','歴史','図書館','説得','目星','聞き耳']},
   {name:'船員',   pts:s=>s.EDU*10+Math.max(s.STR,s.DEX)*10, cr:[10,30], skills:['水泳','ナビゲート','投擲','ショットガン','機械修理','応急手当','聞き耳','登攀']},
   {name:'ディレッタント',pts:s=>s.EDU*10+s.APP*10,cr:[50,99],skills:['芸術','乗馬','図書館','他の言語','ライフル','信用','説得','会計']},
+  // 子供・学生の年齢層だけで出る（職業欄で直接選ぶこともできる）
+  {name:'学生',   pts:s=>s.EDU*20, cr:[0,15], youth:true, skills:['図書館','目星','聞き耳','言いくるめ','隠れる','忍び歩き','跳躍','他の言語']},
 ];
 
 // =====================
@@ -420,6 +422,13 @@ const STORY={
     '船員':['大海原で奇妙なものを目撃したことがある。船長は「見なかったことにしろ」と言い、今でも口を噤んでいる。','港から港へ渡り歩く生活の中で、世界の広さと、その深さを知った。深さのほうがずっと怖い。','漂流者を拾ったことがある。彼は助けられたことを、最後まで感謝しなかった。海に戻りたがっていた。'],
     'ディレッタント':['財産と暇を持て余し、知的好奇心のままに様々な分野に首を突っ込んできた。最近首を突っ込んだ分野が、少し深すぎたかもしれない。','社交界に属しながら、その裏で流通する奇妙な情報や品物に魅せられている。表の顔と裏の顔、どちらが本物かはわからない。','蒐集家の集まりで、出所を誰も語らない品が回覧されたことがある。手に取った者の何人かとは、それきり連絡が取れない。'],
   },
+  // 学生（子供〜大学生）の経歴。年齢に関係なく読めるよう、学校の種類は書かない
+  youthPath:[
+    '学校では目立たない方だったが、図書室の奥の棚だけは誰よりもよく知っている。',
+    '友人と始めた放課後の噂話の調査が、いつの間にか冗談では済まなくなってきた。',
+    '部活動の合宿先で、説明のつかない出来事に出くわした。仲間の誰もその話をしたがらない。',
+    '家族の転勤で何度も学校を変わってきた。新しい土地の古い話を集めるのが、ひそかな趣味になった。',
+  ],
   defaultPath:['その道に進んだ経緯は複雑で、本人も多くを語らない。','運命に導かれるようにして今の仕事に就いた。導いたのが何であったかは、今となっては確かめようもない。','長い回り道の末にこの仕事に落ち着いた。回り道の途中で見たものについては、あまり話したがらない。'],
   end:[
     'ここ最近、奇妙な符合が続いている。偶然と呼ぶには、少し多すぎる。',
@@ -442,8 +451,9 @@ const STORY={
 function makeStory(c){
   const p=a=>a[Math.floor(Math.random()*a.length)];
   const birth=p(STORY.birth);
-  const origin=p(STORY.origin);
-  const path=p(STORY.path[c.occupation]||STORY.defaultPath);
+  // 若い探索者には「家業を継がなかった」など大人の経緯を出さない
+  const origin=p(c.age<23?STORY.origin.filter(o=>!o.includes('家業を継がなかった')):STORY.origin);
+  const path=p(c.occupation==='学生'?STORY.youthPath:(STORY.path[c.occupation]||STORY.defaultPath));
   const end=p(STORY.end);
   const agePfx=c.age<25?`まだ${c.age}歳と若いが、`:c.age>55?`${c.age}歳となった今も、`:`${c.age}歳になった。`;
   return `${birth}に生まれ、${origin}${path}${agePfx}その歩みが、新たな局面を迎えようとしている。${end}`;
@@ -598,6 +608,19 @@ function pickHobby(sk,occ,recommended,favor=[]){
   return [...new Set([...recNonOcc,...favNonOcc,...hobbyPick])];
 }
 
+// 職業を決める。直接選んだらそれ。ランダムなら：子供・学生は「学生」、大人は学生以外。
+// 方向性があるときは、その技能を多く持つ職業ほど出やすくする
+function pickOcc(jobV,age,band,favor=[]){
+  if(jobV!=='random'){const o=OCC.find(o=>o.name===jobV);if(o)return o;}
+  const young=band==='子供'||band==='学生'||age<15;
+  const pool=OCC.filter(o=>young?o.youth:!o.youth);
+  if(!favor.length||pool.length===1)return pick(pool);
+  const w=pool.map(o=>{const n=o.skills.filter(k=>favor.includes(k)).length;return n>=2?n*n:0.3;});
+  let r=Math.random()*w.reduce((a,b)=>a+b,0);
+  for(let i=0;i<pool.length;i++){r-=w[i];if(r<=0)return pool[i];}
+  return pool[pool.length-1];
+}
+
 // 年齢を決める：直接入力 ＞ 年齢層 ＞ 既定の範囲
 function rollAge(ageV,band,lo=18,hi=65){
   if(ageV)return clamp(parseInt(ageV),10,80);
@@ -623,7 +646,7 @@ function generate6({sex,name,ageV,band,jobV,era,eraV,cap,recommended,recTarget,f
   const HP=Math.floor((CON+SIZ)/2);
   const MP=POW, SAN=POW*5, Luck=POW*5, Idea=INT*5, Know=EDU*5, DB=db(STR,SIZ);
 
-  const occ=jobV==='random'?pick(OCC):OCC.find(o=>o.name===jobV)||pick(OCC);
+  const occ=pickOcc(jobV,age,band,favor);
 
   // 時代で存在しない技能を落とす
   let sk={...BASE};
@@ -660,7 +683,7 @@ function generate7({sex,name,ageV,band,jobV,era,eraV,cap,recommended,recTarget,f
   const {db:DB,build:Build}=dbBuild7(STR,SIZ);
   const MOV=mov7(STR,DEX,SIZ,age);
 
-  const occ=jobV==='random'?pick(OCC):OCC.find(o=>o.name===jobV)||pick(OCC);
+  const occ=pickOcc(jobV,age,band,favor);
 
   let sk={};
   Object.keys(BASE).forEach(k=>sk[k]=base7(k));
