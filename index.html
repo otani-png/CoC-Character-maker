@@ -201,7 +201,7 @@ input::placeholder{color:var(--text-faint)}
   <div class="head-in">
     <div class="eyebrow">CoC 6th Edition · Character Creator</div>
     <h1>キャラシメーカー</h1>
-    <div class="head-sub">ボタンひとつで、クトゥルフ神話TRPG6版の探索者を1人ぶん作ります。能力値・職業技能・背景設定に加えて、ココフォリアの駒データもそのまま持ち出せます。</div>
+    <div class="head-sub">ボタンひとつで、クトゥルフ神話TRPGの探索者を1人ぶん作ります（6版・7版）。能力値・職業技能・背景設定に加えて、ココフォリアの駒データもそのまま持ち出せます。</div>
   </div>
 </header>
 
@@ -209,6 +209,13 @@ input::placeholder{color:var(--text-faint)}
   <div class="input-block">
     <span class="lbl">条件</span>
     <div class="fields">
+      <div class="field">
+        <label for="sel-edition">版</label>
+        <select id="sel-edition">
+          <option value="6">6版</option>
+          <option value="7">7版</option>
+        </select>
+      </div>
       <div class="field">
         <label for="sel-sex">性別</label>
         <select id="sel-sex">
@@ -257,7 +264,7 @@ input::placeholder{color:var(--text-faint)}
       <button class="btn-sm" id="btn-text">テキストをコピー</button>
       <button class="btn-sm" id="btn-coco">ココフォリアの駒をコピー</button>
     </div>
-    <div class="hint">年齢は空欄でランダム（6版ルールに合わせ最低年齢は EDU+6）。「詳細設定」から、技能値の上限（既定90）と、シナリオの推奨技能を指定できます。推奨技能に選んだものは、目標値（既定60）まで必ず確保します。ココフォリアの駒データは、コピーしてルーム上で Ctrl+V を押すだけで駒になります。</div>
+    <div class="hint">年齢は空欄でランダム（6版は最低年齢 EDU+6）。版を7版にすると、能力値は×5の値で出て、技能上限の既定は75になります。「詳細設定」から、技能値の上限（既定90）と、シナリオの推奨技能を指定できます。推奨技能に選んだものは、目標値（既定60）まで必ず確保します。ココフォリアの駒データは、コピーしてルーム上で Ctrl+V を押すだけで駒になります。</div>
   </div>
 
   <div class="card" id="empty">
@@ -445,11 +452,51 @@ function distrib(names,total,cur,cap){
 }
 
 // =====================
+// 7TH EDITION (7版) — データ＆ヘルパー
+// =====================
+// 7版で基礎値が変わる主な技能（6版BASEからの上書き）。確証のあるものだけ。詳細は NOTES_7版対応.md
+const BASE7={
+  '聞き耳':20,'図書館':20,'忍び歩き':20,'説得':10,'心理学':10,
+  '会計':5,'歴史':5,'医学':1,'機械修理':10,'コンピューター':5,'変装':5,
+  '登攀':20,'跳躍':20,'水泳':20,'投擲':20,'こぶし':25,
+};
+const base7=k=>(k in BASE7)?BASE7[k]:(BASE[k]??1);
+
+// 7版 ダメージボーナス＆ビルド（STR+SIZ の合計／能力値は×5スケール）
+function dbBuild7(str,siz){
+  const t=str+siz;
+  if(t<=64)  return {db:'-2',  build:-2};
+  if(t<=84)  return {db:'-1',  build:-1};
+  if(t<=124) return {db:'0',   build:0};
+  if(t<=164) return {db:'+1d4',build:1};
+  if(t<=204) return {db:'+1d6',build:2};
+  if(t<=284) return {db:'+2d6',build:3};
+  if(t<=364) return {db:'+3d6',build:4};
+  if(t<=444) return {db:'+4d6',build:5};
+  return {db:'+5d6',build:6};
+}
+
+// 7版 移動力(MOV)：STR/DEX と SIZ の比較 ＋ 年齢補正
+function mov7(str,dex,siz,age){
+  let mov;
+  if(str<siz&&dex<siz)mov=7;
+  else if(str>siz&&dex>siz)mov=9;
+  else mov=8;
+  if(age>=80)mov-=5;
+  else if(age>=70)mov-=4;
+  else if(age>=60)mov-=3;
+  else if(age>=50)mov-=2;
+  else if(age>=40)mov-=1;
+  return Math.max(mov,1);
+}
+
+// =====================
 // GENERATE
 // =====================
 let CHAR=null;
 
 function generate(){
+  const edition=document.getElementById('sel-edition').value;
   const eraV=document.getElementById('sel-era').value;
   const sexV=document.getElementById('sel-sex').value;
   const jobV=document.getElementById('sel-job').value;
@@ -457,7 +504,8 @@ function generate(){
   const capV=document.getElementById('inp-cap').value;
 
   const era=ERAS[eraV]||ERAS['現代'];
-  const cap=clamp(parseInt(capV)||90,1,99);
+  // 技能上限の既定は 6版90・7版75（7版の作成時標準）。入力があればそちらを優先
+  const cap=clamp(parseInt(capV)||(edition==='7'?75:90),1,99);
 
   const recTargetEl=document.getElementById('inp-rectarget');
   const recTarget=clamp(parseInt(recTargetEl&&recTargetEl.value)||60,1,cap);
@@ -469,6 +517,30 @@ function generate(){
   const sn=pick(era.ln);
   const name=era.order==='en'?gn+' '+sn:sn+' '+gn;
 
+  const ctx={sex,name,ageV,jobV,era,eraV:eraV||'現代',cap,recommended,recTarget};
+  CHAR=edition==='7'?generate7(ctx):generate6(ctx);
+  CHAR.story=makeStory(CHAR);
+  return CHAR;
+}
+
+// 技能上限の適用と、推奨技能の目標値確保（6版・7版共通）
+function finishSkills(sk,cap,recommended,recTarget,exempt=['信用']){
+  // 信用はクレジットレーティングの別枠なので上限の対象外（7版は母国語＝EDUも対象外）
+  for(const k of Object.keys(sk)){ if(!exempt.includes(k)) sk[k]=Math.min(sk[k],cap); }
+  // 推奨技能は目標値まで必ず確保（通常配分で届かない分は上乗せ。上限は超えない）
+  for(const k of recommended){ if(k in sk) sk[k]=Math.min(cap,Math.max(sk[k],recTarget)); }
+}
+
+// 推奨技能のうち職業技能でないものは、趣味ポイントの配分先に必ず含める
+function pickHobby(sk,occ,recommended){
+  const recNonOcc=recommended.filter(k=>k in sk&&!occ.skills.includes(k)&&k!=='母国語'&&k!=='信用');
+  const hobbyPool=Object.keys(sk).filter(k=>!occ.skills.includes(k)&&k!=='クトゥルフ神話'&&k!=='母国語'&&k!=='信用');
+  const hobbyPick=[...hobbyPool].sort(()=>Math.random()-.5).slice(0,6);
+  return [...new Set([...recNonOcc,...hobbyPick])];
+}
+
+// ── 6版 ──
+function generate6({sex,name,ageV,jobV,era,eraV,cap,recommended,recTarget}){
   const stats={STR:r3d6(),CON:r3d6(),POW:r3d6(),DEX:r3d6(),APP:r3d6(),SIZ:r2d6p6(),INT:r2d6p6(),EDU:r3d6p3()};
 
   // 6版ルール：探索者の最低年齢 = EDU + 6
@@ -482,12 +554,7 @@ function generate(){
   const {STR,CON,POW,DEX,APP,SIZ,INT,EDU}=stats;
 
   const HP=Math.floor((CON+SIZ)/2);
-  const MP=POW;
-  const SAN=POW*5;
-  const Luck=POW*5;
-  const Idea=INT*5;
-  const Know=EDU*5;
-  const DB=db(STR,SIZ);
+  const MP=POW, SAN=POW*5, Luck=POW*5, Idea=INT*5, Know=EDU*5, DB=db(STR,SIZ);
 
   const occ=jobV==='random'?pick(OCC):OCC.find(o=>o.name===jobV)||pick(OCC);
 
@@ -501,24 +568,50 @@ function generate(){
   Object.assign(sk,distrib(occ.skills.filter(k=>k in sk),occPts,sk,cap));
   sk['信用']=Math.min(Math.floor(Math.random()*(occ.cr[1]-occ.cr[0])+occ.cr[0]),99);
 
-  // 推奨技能のうち職業技能でないものは、趣味ポイントの配分先に必ず含める
-  const recNonOcc=recommended.filter(k=>k in sk&&!occ.skills.includes(k)&&k!=='母国語'&&k!=='信用');
-  const hobbyPool=Object.keys(sk).filter(k=>!occ.skills.includes(k)&&k!=='クトゥルフ神話'&&k!=='母国語'&&k!=='信用');
-  let hobbyPick=[...hobbyPool].sort(()=>Math.random()-.5).slice(0,6);
-  hobbyPick=[...new Set([...recNonOcc,...hobbyPick])];
-  Object.assign(sk,distrib(hobbyPick,INT*10,sk,cap));
+  Object.assign(sk,distrib(pickHobby(sk,occ,recommended),INT*10,sk,cap));
+  finishSkills(sk,cap,recommended,recTarget);
 
-  // 技能上限を最終的に適用（信用はクレジットレーティングの別枠なので対象外）
-  for(const k of Object.keys(sk)){ if(k!=='信用') sk[k]=Math.min(sk[k],cap); }
-
-  // 推奨技能は目標値まで必ず確保（通常配分で届かない分は上乗せ。上限は超えない）
-  for(const k of recommended){ if(k in sk) sk[k]=Math.min(cap,Math.max(sk[k],recTarget)); }
-
-  CHAR={name,sex,age,era:eraV||'現代',cap,recommended,recTarget,occupation:occ.name,primarySkills:occ.skills,
+  return {edition:'6',name,sex,age,era:eraV,cap,recommended,recTarget,occupation:occ.name,primarySkills:occ.skills,
         stats,skills:sk,derived:{HP,MP,SAN,Luck,Idea,Know,DB},
         occPts,hobbyPts:INT*10,story:null};
-  CHAR.story=makeStory(CHAR);
-  return CHAR;
+}
+
+// ── 7版 ──（能力値は×5スケール。詳細な根拠は NOTES_7版対応.md）
+function generate7({sex,name,ageV,jobV,era,eraV,cap,recommended,recTarget}){
+  const stats={
+    STR:r3d6()*5, CON:r3d6()*5, POW:r3d6()*5, DEX:r3d6()*5, APP:r3d6()*5,
+    SIZ:r2d6p6()*5, INT:r2d6p6()*5, EDU:r2d6p6()*5,
+  };
+  const {STR,CON,POW,DEX,APP,SIZ,INT,EDU}=stats;
+  // 7版は6版の「EDU+6」の年齢制限が無い（年齢補正は未実装＝NOTES参照）
+  const age=ageV?clamp(parseInt(ageV),14,80):Math.floor(Math.random()*48)+18;
+
+  const HP=Math.floor((CON+SIZ)/10);
+  const MP=Math.floor(POW/5);
+  const SAN=POW;
+  const Luck=r3d6()*5;                 // 7版は幸運を独立してロール
+  const {db:DB,build:Build}=dbBuild7(STR,SIZ);
+  const MOV=mov7(STR,DEX,SIZ,age);
+
+  const occ=jobV==='random'?pick(OCC):OCC.find(o=>o.name===jobV)||pick(OCC);
+
+  let sk={};
+  Object.keys(BASE).forEach(k=>sk[k]=base7(k));
+  era.drop.forEach(k=>delete sk[k]);
+  sk['回避']=Math.floor(DEX/2);        // 7版 回避＝DEX/2
+  sk['母国語']=EDU;                    // 7版 母国語＝EDU
+
+  const occPts=EDU*4;                  // 簡易：7版職業ポイント＝EDU×4（本来は職業ごとに異なる）
+  Object.assign(sk,distrib(occ.skills.filter(k=>k in sk),occPts,sk,cap));
+  sk['信用']=Math.floor(Math.random()*(occ.cr[1]-occ.cr[0])+occ.cr[0]);
+
+  const hobbyPts=INT*2;                // 7版 趣味/興味技能＝INT×2
+  Object.assign(sk,distrib(pickHobby(sk,occ,recommended),hobbyPts,sk,cap));
+  finishSkills(sk,cap,recommended,recTarget,['信用','母国語']);
+
+  return {edition:'7',name,sex,age,era:eraV,cap,recommended,recTarget,occupation:occ.name,primarySkills:occ.skills,
+        stats,skills:sk,derived:{HP,MP,SAN,Luck,DB,Build,MOV},
+        occPts,hobbyPts,story:null};
 }
 
 // =====================
@@ -527,11 +620,14 @@ function generate(){
 function render(c){
   const {stats:s,derived:d,skills:sk,primarySkills:ps}=c;
   const reco=c.recommended||[];
+  const e7=c.edition==='7';
   const sh=document.getElementById('sheet');
 
   const dBox=(cls,label,val)=>`<div class="d-box ${cls}"><div class="dl">${label}</div><div class="dv">${val}</div></div>`;
 
-  const statBox=(k,v)=>`<div class="stat-box"><div class="sn">${k}</div><div class="sv">${v}</div><div class="sx">×5 = ${v*5}</div></div>`;
+  const statBox=e7
+    ? (k,v)=>`<div class="stat-box"><div class="sn">${k}</div><div class="sv">${v}</div><div class="sx">½ ${Math.floor(v/2)} · ⅕ ${Math.floor(v/5)}</div></div>`
+    : (k,v)=>`<div class="stat-box"><div class="sn">${k}</div><div class="sv">${v}</div><div class="sx">×5 = ${v*5}</div></div>`;
 
   const skRow=(k,v)=>{
     const pct=Math.min(v,90);
@@ -551,7 +647,7 @@ function render(c){
 
   sh.innerHTML=`
 <div class="card">
-  <div class="card-t">探索者<span class="sub">CoC 6版</span></div>
+  <div class="card-t">探索者<span class="sub">CoC ${e7?'7版':'6版'}</span></div>
   <div class="card-body">
     <div class="char-name">${c.name}</div>
     <div class="char-meta">
@@ -565,15 +661,16 @@ function render(c){
       ${dBox('mp','MP',d.MP)}
       ${dBox('san','SAN',d.SAN)}
       ${dBox('','幸運',d.Luck)}
-      ${dBox('','アイデア',d.Idea)}
-      ${dBox('','知識',d.Know)}
+      ${e7
+        ? dBox('','移動',d.MOV)+dBox('','ビルド',(d.Build>=0?'+':'')+d.Build)
+        : dBox('','アイデア',d.Idea)+dBox('','知識',d.Know)}
     </div>
   </div>
 </div>
 
 <div class="grid2">
   <div class="card">
-    <div class="card-t">能力値<span class="sub">下段は ×5 の値</span></div>
+    <div class="card-t">能力値<span class="sub">${e7?'下段は ½（ハード）と ⅕（イクストリーム）':'下段は ×5 の値'}</span></div>
     <div class="card-body">
       <div class="stat-grid">
         ${['STR','CON','POW','DEX','APP','SIZ','INT','EDU'].map(k=>statBox(k,s[k])).join('')}
@@ -603,6 +700,8 @@ function render(c){
 </div>
 `;
 
+  const eyebrow=document.querySelector&&document.querySelector('.eyebrow');
+  if(eyebrow)eyebrow.textContent=`CoC ${e7?'7th':'6th'} Edition · Character Creator`;
   document.getElementById('empty').style.display='none';
   sh.style.display='block';
 }
@@ -612,20 +711,24 @@ function render(c){
 // =====================
 function toText(c){
   const {stats:s,derived:d,skills:sk,primarySkills:ps}=c;
+  const e7=c.edition==='7';
+  const baseOf=e7?base7:(k=>BASE[k]??0);
+  const derivedLine=e7
+    ? `HP:${d.HP}  MP:${d.MP}  SAN:${d.SAN}  幸運:${d.Luck}  移動:${d.MOV}  ビルド:${d.Build>=0?'+':''}${d.Build}  DB:${d.DB}`
+    : `HP:${d.HP}  MP:${d.MP}  SAN:${d.SAN}  幸運:${d.Luck}  アイデア:${d.Idea}  知識:${d.Know}\nDB:${d.DB}`;
   return[
-    '=== クトゥルフ神話TRPG 6版 キャラクターシート ===',
+    `=== クトゥルフ神話TRPG ${e7?'7版':'6版'} キャラクターシート ===`,
     `名前: ${c.name}　性別: ${c.sex}　年齢: ${c.age}歳　職業: ${c.occupation}`,
     `時代: ${c.era}　技能上限: ${c.cap}`,
     ...(c.recommended&&c.recommended.length?[`推奨技能（目標${c.recTarget}）: ${c.recommended.join('、')}`]:[]),
     '',
     `STR:${s.STR}  CON:${s.CON}  POW:${s.POW}  DEX:${s.DEX}`,
     `APP:${s.APP}  SIZ:${s.SIZ}  INT:${s.INT}  EDU:${s.EDU}`,
-    `HP:${d.HP}  MP:${d.MP}  SAN:${d.SAN}  幸運:${d.Luck}  アイデア:${d.Idea}  知識:${d.Know}`,
-    `DB:${d.DB}`,
+    derivedLine,
     '',
     '--- 技能（＊職業技能）---',
     ...CATS.map(cat=>{
-      const rows=cat.keys.filter(k=>k in sk&&(sk[k]>(BASE[k]??0)+5||ps.includes(k)));
+      const rows=cat.keys.filter(k=>k in sk&&(sk[k]>baseOf(k)+5||ps.includes(k)));
       if(!rows.length)return null;
       return[`[${cat.label}]`,...rows.map(k=>`  ${ps.includes(k)?'＊':'　'}${k}: ${sk[k]}`)].join('\n');
     }).filter(Boolean),
@@ -637,6 +740,7 @@ function toText(c){
 
 function toCoco(c){
   const {stats:s,derived:d,skills:sk}=c;
+  const e7=c.edition==='7';
 
   const skillCmds=Object.entries(sk)
     .filter(([k,v])=>v>0&&k!=='クトゥルフ神話'&&k!=='母国語')
@@ -656,22 +760,22 @@ function toCoco(c){
   if(sk['ショットガン']>BASE['ショットガン'])dmgCmds.push(`4d6 【ダメージ：ショットガン(至近)】`);
   if(sk['サブマシンガン']>BASE['サブマシンガン'])dmgCmds.push(`1d10+2 【ダメージ：サブマシンガン】`);
 
-  const cmds=[
-    `1d100<={SAN} 【正気度ロール】`,
-    `CCB<=${d.Idea} 【アイデア】`,
-    `CCB<=${d.Luck} 【幸運】`,
-    `CCB<=${d.Know} 【知識】`,
-    skillCmds,
-    dmgCmds.join('\n'),
-    `CCB<={STR}*5 【STR×5】`,
-    `CCB<={CON}*5 【CON×5】`,
-    `CCB<={POW}*5 【POW×5】`,
-    `CCB<={DEX}*5 【DEX×5】`,
-    `CCB<={APP}*5 【APP×5】`,
-    `CCB<={SIZ}*5 【SIZ×5】`,
-    `CCB<={INT}*5 【INT×5】`,
-    `CCB<={EDU}*5 【EDU×5】`,
-  ].join('\n');
+  const ABILS=['STR','CON','POW','DEX','APP','SIZ','INT','EDU'];
+  const charCmds=e7
+    ? ABILS.map(k=>`CCB<={${k}} 【${k}】`).join('\n')          // 7版：能力値はすでに%なので×5しない
+    : ABILS.map(k=>`CCB<={${k}}*5 【${k}×5】`).join('\n');
+
+  const cmds=(e7
+    ? [`1d100<={SAN} 【正気度ロール】`,`CCB<=${d.Luck} 【幸運】`,skillCmds,dmgCmds.join('\n'),charCmds]
+    : [`1d100<={SAN} 【正気度ロール】`,`CCB<=${d.Idea} 【アイデア】`,`CCB<=${d.Luck} 【幸運】`,`CCB<=${d.Know} 【知識】`,skillCmds,dmgCmds.join('\n'),charCmds]
+  ).join('\n');
+
+  const params=ABILS.map(k=>({label:k,value:String(s[k])}));
+  if(e7){
+    params.push({label:'MOV',value:String(d.MOV)});
+    params.push({label:'ビルド',value:(d.Build>=0?'+':'')+d.Build});
+    params.push({label:'DB',value:d.DB});
+  }
 
   return JSON.stringify({
     kind:'character',
@@ -689,16 +793,7 @@ function toCoco(c){
         {label:'MP', value:d.MP, max:d.MP},
         {label:'SAN',value:d.SAN,max:d.SAN},
       ],
-      params:[
-        {label:'STR',value:String(s.STR)},
-        {label:'CON',value:String(s.CON)},
-        {label:'POW',value:String(s.POW)},
-        {label:'DEX',value:String(s.DEX)},
-        {label:'APP',value:String(s.APP)},
-        {label:'SIZ',value:String(s.SIZ)},
-        {label:'INT',value:String(s.INT)},
-        {label:'EDU',value:String(s.EDU)},
-      ],
+      params,
     }
   });
 }
@@ -770,6 +865,14 @@ function init(){
   });
   document.getElementById('btn-rec-clear').addEventListener('click',()=>{
     grid.querySelectorAll('input[type=checkbox]').forEach(cb=>cb.checked=false);
+  });
+
+  // 版を切り替えたら、技能上限の既定値も合わせる（6版90／7版75。手で変えた値はそのまま）
+  document.getElementById('sel-edition').addEventListener('change',e=>{
+    const capEl=document.getElementById('inp-cap');
+    const to7=e.target.value==='7';
+    if(to7&&capEl.value==='90')capEl.value='75';
+    else if(!to7&&capEl.value==='75')capEl.value='90';
   });
 
   document.getElementById('btn-gen').addEventListener('click',()=>{

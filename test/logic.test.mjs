@@ -192,5 +192,51 @@ check('origin >= 14', t.STORY.origin.length >= 14);
 check('end >= 14', t.STORY.end.length >= 14);
 check('all 17 occupations have 3 paths', Object.values(t.STORY.path).every(p => p.length >= 3));
 
+// --- 7. 7版モード：能力値×5・派生値・上限・出力 ---
+mockValues['sel-edition'] = '7';
+mockValues['sel-job'] = 'random';
+mockValues['inp-cap'] = '';
+mockRecommended = [];
+for (let i = 0; i < 1000; i++) {
+  mockValues['inp-age'] = '';
+  const c = t.generate();
+  const s = c.stats, d = c.derived;
+  check('7e: edition', c.edition === '7');
+  for (const k of ['STR', 'CON', 'POW', 'DEX', 'APP']) check(`7e: ${k} 15-90 ×5`, s[k] >= 15 && s[k] <= 90 && s[k] % 5 === 0);
+  for (const k of ['SIZ', 'INT', 'EDU']) check(`7e: ${k} 40-90 ×5`, s[k] >= 40 && s[k] <= 90 && s[k] % 5 === 0);
+  check('7e: HP=(CON+SIZ)/10', d.HP === Math.floor((s.CON + s.SIZ) / 10));
+  check('7e: MP=POW/5', d.MP === Math.floor(s.POW / 5));
+  check('7e: SAN=POW', d.SAN === s.POW);
+  check('7e: Luck 15-90 ×5', d.Luck >= 15 && d.Luck <= 90 && d.Luck % 5 === 0);
+  check('7e: MOV 2-9', d.MOV >= 2 && d.MOV <= 9);
+  check('7e: no Idea/Know', d.Idea === undefined && d.Know === undefined);
+  check('7e: 母国語=EDU', c.skills['母国語'] === s.EDU);
+  check('7e: default cap 75', c.cap === 75);
+  for (const [k, v] of Object.entries(c.skills)) {
+    if (k !== '信用' && k !== '母国語') check(`7e: ${k} <= 75`, v <= 75);
+  }
+}
+// 7版：推奨技能と時代
+mockRecommended = ['目星', 'オカルト'];
+mockValues['sel-era'] = '1920年代';
+for (let i = 0; i < 200; i++) {
+  const c = t.generate();
+  check('7e reco: 目星 >= 60', c.skills['目星'] >= 60);
+  check('7e reco: オカルト >= 60', c.skills['オカルト'] >= 60);
+  check('7e era: コンピューターが無い', !('コンピューター' in c.skills));
+  const json = JSON.parse(t.toCoco(c));
+  check('7e coco: no ×5 on stats', !json.data.commands.includes('{STR}*5'));
+  check('7e coco: no アイデア', !json.data.commands.includes('【アイデア】'));
+  check('7e coco: has MOV param', json.data.params.some(p => p.label === 'MOV'));
+  check('7e coco: no undefined/NaN', !/undefined|NaN/.test(json.data.commands));
+  const txt = t.toText(c);
+  check('7e text: 7版', txt.includes('7版'));
+  check('7e text: no undefined/NaN', !/undefined|NaN/.test(txt));
+}
+mockRecommended = [];
+mockValues['sel-era'] = '現代';
+mockValues['sel-edition'] = '6';
+check('6e after 7e: edition back', t.generate().edition === '6');
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
