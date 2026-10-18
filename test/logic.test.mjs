@@ -94,7 +94,7 @@ for (let i = 0; i < 100; i++) {
   const c = t.generate();
   check('時代は現代＝コンピューターがある', 'コンピューター' in c.skills);
 }
-const BANDS = { '子供': [10, 14], '学生': [15, 22], '社会人': [22, 51], '老人': [60, 80] };
+const BANDS = { '子供': [10, 14], '学生': [15, 22], '社会人': [22, 60], 'シニア': [60, 80] };
 for (const ed of ['6', '7']) {
   mockValues['sel-edition'] = ed;
   for (const [band, [lo, hi]] of Object.entries(BANDS)) {
